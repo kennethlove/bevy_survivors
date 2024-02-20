@@ -1,5 +1,6 @@
-use crate::{AnimationIndices, AnimationTimer, Pawn};
+use crate::{AnimationIndices, AnimationTimer, Pawn, Enemy};
 use bevy::prelude::*;
+use bevy::input::keyboard::KeyCode;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
@@ -108,6 +109,23 @@ impl KnightBundle {
             animation_indices.last = new_animation_indices.last;
             if atlas.index > animation_indices.last || atlas.index < animation_indices.first {
                 atlas.index = animation_indices.first;
+            }
+        }
+    }
+
+    pub fn collisions(
+        mut commands: Commands,
+        mut player_query: Query<(&Transform, &Sprite), With<Pawn>>,
+        mut enemy_query: Query<(&Transform, &Sprite), With<Enemy>>,
+        keyboard_input: Res<ButtonInput<KeyCode>>,
+    ) {
+        let player = player_query.single_mut();
+        for (enemy_transform, enemy_sprite) in &mut enemy_query.iter() {
+            if keyboard_input.just_pressed(KeyCode::Space) {
+                if player.0.translation.distance(enemy_transform.translation) < 100. {
+                    info!("Player collided with enemy!");
+                    info!("Player attacked enemy!");
+                }
             }
         }
     }

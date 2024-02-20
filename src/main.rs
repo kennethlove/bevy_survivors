@@ -2,12 +2,8 @@ mod goblin;
 mod knight;
 
 use bevy::{
-    core_pipeline::{
-        bloom::{BloomCompositeMode, BloomSettings},
-        tonemapping::Tonemapping,
-    },
     prelude::*,
-    window::{Window, WindowTheme},
+    window::{Window, WindowTheme}
 };
 use goblin::GoblinBundle;
 use knight::KnightBundle;
@@ -68,27 +64,17 @@ fn main() {
         )
         // .add_systems(OnEnter(AppState::Finished), setup_player)
         .add_systems(Update, animate_sprites)
-        .add_systems(
-            FixedUpdate,
-            (KnightBundle::move_sprite, KnightBundle::collisions),
-        )
+        .add_systems(FixedUpdate, (
+            KnightBundle::move_sprite,
+            KnightBundle::collisions,
+        ))
         // .add_systems(FixedUpdate, move_sprite)
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                hdr: true,
-                ..default()
-            },
-            tonemapping: Tonemapping::TonyMcMapface,
-            ..default()
-        },
-        BloomSettings::default(),
-    ));
+    commands.spawn(Camera2dBundle::default());
 }
 
 fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -139,10 +125,8 @@ fn setup_goblin(
     commands: Commands,
     asset_server: Res<AssetServer>,
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let goblin = GoblinBundle::default();
     let transform = Transform::from_translation(Vec3::new(100., 100., 0.));
-    goblin.setup_sprite(commands, asset_server, texture_atlas_layouts, transform, meshes, materials);
+    goblin.setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
 }

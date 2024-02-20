@@ -1,6 +1,5 @@
 use crate::{AnimationIndices, AnimationTimer, Enemy};
 use bevy::prelude::*;
-use bevy::sprite::MaterialMesh2dBundle;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
@@ -46,8 +45,6 @@ impl GoblinBundle {
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
         transform: Transform,
-        mut meshes: ResMut<Assets<Mesh>>,
-        mut materials: ResMut<Assets<ColorMaterial>>,
     ) {
         let texture = asset_server.load("Goblin_Yellow.png");
         let layout = TextureAtlasLayout::from_grid(Vec2::new(192., 192.), 7, 5, None, None);
@@ -67,16 +64,6 @@ impl GoblinBundle {
             animation_indices,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Enemy,
-        ));
-        let translation = Vec3::new(-30., 13., 0.5);
-
-        commands.spawn((MaterialMesh2dBundle {
-            mesh: meshes.add(Circle::new(10.)).into(),
-            material: materials.add(Color::rgb(7.5, 7.0, 7.5)),
-            transform: transform * Transform::from_translation(translation),
-            ..default()
-        }, Torch
-
         ));
     }
 }
