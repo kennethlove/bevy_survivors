@@ -76,19 +76,19 @@ fn menu_button_system(
     mut state: ResMut<State<AppState>>,
     mut interaction_query: Query<(&Interaction, &Children, &mut UiImage),
         (Changed<Interaction>, With<Button>)>,
-    mut text_query: Query<&mut Text>,
     asset_server: Res<AssetServer>,
 ) {
     let pressed_image = asset_server.load("buttons/Button_Blue_9Slides_Pressed.png");
+    let regular_image = asset_server.load("buttons/Button_Blue_9Slides.png");
     for (interaction, children, mut ui_image) in &mut interaction_query {
         info!("{:?}", ui_image);
-        let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
                 ui_image.texture = pressed_image.clone().into();
-                text.sections[0].value = "Pressed".to_string();
             }
-            _ => {}
+            _ => {
+                ui_image.texture = regular_image.clone().into();
+            }
         }
     }
 }
