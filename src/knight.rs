@@ -15,7 +15,7 @@ const HEAVY_ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
 };
 const STARTING_POSITION: Vec3 = Vec3::new(0., 0., 2.);
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub enum KnightColor {
     Yellow,
     Blue,

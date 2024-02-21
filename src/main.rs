@@ -3,7 +3,7 @@ mod knight;
 
 use bevy::{
     prelude::*,
-    window::{Window, WindowTheme}
+    window::{Window, WindowTheme},
 };
 use goblin::GoblinBundle;
 use knight::{KnightBundle, KnightColor};
@@ -12,6 +12,8 @@ use knight::{KnightBundle, KnightColor};
 enum AppState {
     #[default]
     Setup,
+    Menu,
+    InGame,
     Finished,
 }
 
@@ -55,29 +57,75 @@ fn main() {
         )
         .add_systems(
             Startup,
-            (
-                setup_camera,
-                setup_background,
-                setup_goblin,
-                setup_player,
-            ),
+            (setup_camera, setup_background,),
         )
-        // .add_systems(OnEnter(AppState::Finished), setup_player)
+        .add_systems(OnEnter(AppState::Menu), setup_menu)
+        .add_systems(OnEnter(AppState::InGame), (setup_goblin, setup_player))
         .add_systems(Update, animate_sprites)
-        .add_systems(FixedUpdate, (
-            KnightBundle::move_sprite,
-            KnightBundle::collisions,
-        ))
-        // .add_systems(FixedUpdate, move_sprite)
+        // .add_systems(
+        //     FixedUpdate,
+        //     (KnightBundle::move_sprite, KnightBundle::collisions),
+        // )
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
+}
+
+fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let image = asset_server.load("buttons/Button_Blue_9Slides.png");
+
+    let slicer = TextureSlicer {
+        border: BorderRect::square(22.0),
+        center_scale_mode: SliceScaleMode::Stretch,
+        sides_scale_mode: SliceScaleMode::Stretch,
+        max_corner_scale: 1.,
+    };
+
+    commands.spawn(NodeBundle {
+        style: Style {
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        ..default()
+    })
+    .with_children(|parent| {
+        let colors = [KnightColor::Blue, KnightColor::Purple, KnightColor::Red, KnightColor::Yellow];
+        for color in colors {
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(150.),
+                            height: Val::Px(50.),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::all(Val::Px(20.)),
+                            ..default()
+                        },
+                        image: image.clone().into(),
+                        ..default()
+                    },
+                    ImageScaleMode::Sliced(slicer.clone()),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(format!("{:?}", color), TextStyle {
+                        font_size: 40.,
+                        color: Color::DARK_GRAY,
+                        ..default()
+                    },
+                ));
+            });
+        }
+    });
 }
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>, mut next_state: ResMut<NextState<AppState>>) {
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("floors/floor_1.png"),
@@ -94,6 +142,8 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
             stretch_value: 2.,
         },
     ));
+
+    next_state.set(AppState::Menu);
 }
 
 fn animate_sprites(
@@ -118,7 +168,6 @@ fn setup_player(
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     KnightBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts);
-
 }
 
 fn setup_goblin(
