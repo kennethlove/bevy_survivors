@@ -4,6 +4,7 @@ mod knight;
 use bevy::{
     prelude::*,
     window::{Window, WindowTheme},
+    winit::WinitSettings,
 };
 use goblin::GoblinBundle;
 use knight::{KnightBundle, KnightColor};
@@ -39,6 +40,7 @@ fn main() {
             color: Color::WHITE,
             brightness: 0.5,
         })
+        .insert_resource(WinitSettings::desktop_app())
         .init_state::<AppState>()
         .add_plugins(
             DefaultPlugins
@@ -61,13 +63,34 @@ fn main() {
         )
         .add_systems(OnEnter(AppState::Menu), setup_menu)
         .add_systems(OnEnter(AppState::InGame), (setup_goblin, setup_player))
-        .add_systems(Update, animate_sprites)
+        .add_systems(Update, (animate_sprites, menu_button_system.run_if(in_state(AppState::Menu))))
         // .add_systems(
         //     FixedUpdate,
         //     (KnightBundle::move_sprite, KnightBundle::collisions),
         // )
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
+}
+
+fn menu_button_system(
+    mut state: ResMut<State<AppState>>,
+    mut interaction_query: Query<(&Interaction, &Children, &mut UiImage),
+        (Changed<Interaction>, With<Button>)>,
+    mut text_query: Query<&mut Text>,
+    asset_server: Res<AssetServer>,
+) {
+    let pressed_image = asset_server.load("buttons/Button_Blue_9Slides_Pressed.png");
+    for (interaction, children, mut ui_image) in &mut interaction_query {
+        info!("{:?}", ui_image);
+        let mut text = text_query.get_mut(children[0]).unwrap();
+        match *interaction {
+            Interaction::Pressed => {
+                ui_image.texture = pressed_image.clone().into();
+                text.sections[0].value = "Pressed".to_string();
+            }
+            _ => {}
+        }
+    }
 }
 
 fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
