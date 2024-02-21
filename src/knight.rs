@@ -1,6 +1,7 @@
-use crate::{AnimationIndices, AnimationTimer, Pawn, Enemy};
-use bevy::prelude::*;
+use crate::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use bevy::input::keyboard::KeyCode;
+use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
+use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
@@ -14,6 +15,14 @@ const HEAVY_ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
 };
 const STARTING_POSITION: Vec3 = Vec3::new(0., 0., 2.);
 
+#[derive(Component)]
+pub enum KnightColor {
+    Yellow,
+    Blue,
+    Purple,
+    Red,
+}
+
 #[derive(Bundle)]
 pub struct KnightBundle {
     transform: Transform,
@@ -21,6 +30,7 @@ pub struct KnightBundle {
     animation_indices: AnimationIndices,
     animation_timer: AnimationTimer,
     pawn: Pawn,
+    color: KnightColor,
 }
 
 impl Default for KnightBundle {
@@ -31,18 +41,26 @@ impl Default for KnightBundle {
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn,
+            color: KnightColor::Red,
         }
     }
 }
 
 impl KnightBundle {
     pub fn setup_sprite(
+        self: Self,
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
-        let texture = asset_server.load("Warrior_Purple.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(192., 192.), 49, 1, None, None);
+        let filename = match self.color {
+            KnightColor::Yellow => "Warrior_Yellow.png",
+            KnightColor::Blue => "Warrior_Blue.png",
+            KnightColor::Purple => "Warrior_Purple.png",
+            KnightColor::Red => "Warrior_Red.png",
+        };
+        let texture = asset_server.load(filename);
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(192., 192.), 6, 8, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
@@ -58,6 +76,7 @@ impl KnightBundle {
             animation_indices,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Pawn,
+            self.color,
         ));
     }
 
@@ -116,15 +135,31 @@ impl KnightBundle {
     pub fn collisions(
         mut commands: Commands,
         mut player_query: Query<(&Transform, &Sprite), With<Pawn>>,
-        mut enemy_query: Query<(&Transform, &Sprite), With<Enemy>>,
+        mut enemy_query: Query<(Entity, &Transform), With<Enemy>>,
         keyboard_input: Res<ButtonInput<KeyCode>>,
+        mut gizmos: Gizmos,
     ) {
-        let player = player_query.single_mut();
-        for (enemy_transform, enemy_sprite) in &mut enemy_query.iter() {
-            if keyboard_input.just_pressed(KeyCode::Space) {
-                if player.0.translation.distance(enemy_transform.translation) < 100. {
+        let (player_transform, player_sprite) = player_query.single_mut();
+
+        let mut sword_position = player_transform.translation.truncate() + Vec2::new(30., 0.);
+        if player_sprite.flip_x {
+            sword_position.x -= 115.;
+        }
+
+        let mut sword_pos = BoundingCircle::new(sword_position, 32.);
+        sword_pos.center += Vec2::new(28., 0.);
+        gizmos.circle_2d(sword_pos.center, 32., Color::YELLOW);
+
+        for (enemy_entity, enemy_transform) in &mut enemy_query.iter() {
+            let enemy_pos = Aabb2d::new(enemy_transform.translation.truncate(), Vec2::new(32., 32.));
+            gizmos.rect_2d(enemy_pos.center(), 0., Vec2::new(64., 64.), Color::BLUE);
+
+            if keyboard_input.pressed(KeyCode::Space) {
+                let collision = sword_pos.intersects(&enemy_pos);
+                if collision {
                     info!("Player collided with enemy!");
                     info!("Player attacked enemy!");
+                    commands.entity(enemy_entity).despawn();
                 }
             }
         }

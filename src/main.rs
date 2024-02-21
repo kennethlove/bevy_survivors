@@ -6,7 +6,7 @@ use bevy::{
     window::{Window, WindowTheme}
 };
 use goblin::GoblinBundle;
-use knight::KnightBundle;
+use knight::{KnightBundle, KnightColor};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -59,7 +59,7 @@ fn main() {
                 setup_camera,
                 setup_background,
                 setup_goblin,
-                setup_player.after(setup_goblin),
+                setup_player,
             ),
         )
         // .add_systems(OnEnter(AppState::Finished), setup_player)
@@ -117,8 +117,8 @@ fn setup_player(
     asset_server: Res<AssetServer>,
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    KnightBundle::default();
-    KnightBundle::setup_sprite(commands, asset_server, texture_atlas_layouts);
+    KnightBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts);
+
 }
 
 fn setup_goblin(
@@ -126,7 +126,6 @@ fn setup_goblin(
     asset_server: Res<AssetServer>,
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let goblin = GoblinBundle::default();
     let transform = Transform::from_translation(Vec3::new(100., 100., 0.));
-    goblin.setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
+    GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
 }
