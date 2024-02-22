@@ -7,7 +7,6 @@ version = "0.1.0"
 
 [dependencies]
 bevy = "0.13.0"
-bevy_ase = "0.6.0"
 
 [profile.dev]
 opt-level = 1
