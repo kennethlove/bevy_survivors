@@ -57,13 +57,16 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_systems(
-            Startup,
-            (setup_camera, setup_background,),
-        )
+        .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), setup_menu)
         .add_systems(OnEnter(AppState::InGame), (setup_goblin, setup_player))
-        .add_systems(Update, (animate_sprites, menu_button_system.run_if(in_state(AppState::Menu))))
+        .add_systems(
+            Update,
+            (
+                animate_sprites,
+                menu_button_system.run_if(in_state(AppState::Menu)),
+            ),
+        )
         // .add_systems(
         //     FixedUpdate,
         //     (KnightBundle::move_sprite, KnightBundle::collisions),
@@ -74,20 +77,25 @@ fn main() {
 
 fn menu_button_system(
     mut state: ResMut<State<AppState>>,
-    mut interaction_query: Query<(&Interaction, &Children, &mut UiImage),
-        (Changed<Interaction>, With<Button>)>,
+    mut interaction_query: Query<
+        (&Interaction, &mut UiImage),
+        (Changed<Interaction>, With<Button>),
+    >,
     asset_server: Res<AssetServer>,
 ) {
     let pressed_image = asset_server.load("buttons/Button_Blue_9Slides_Pressed.png");
     let regular_image = asset_server.load("buttons/Button_Blue_9Slides.png");
-    for (interaction, children, mut ui_image) in &mut interaction_query {
-        info!("{:?}", ui_image);
+    let hover_image = asset_server.load("buttons/Button_Hover_9Slides.png");
+    for (interaction, mut ui_image) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
-                ui_image.texture = pressed_image.clone().into();
+                ui_image.texture = pressed_image.clone();
+            }
+            Interaction::Hovered => {
+                ui_image.texture = hover_image.clone();
             }
             _ => {
-                ui_image.texture = regular_image.clone().into();
+                ui_image.texture = regular_image.clone();
             }
         }
     }
@@ -103,52 +111,64 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         max_corner_scale: 1.,
     };
 
-    commands.spawn(NodeBundle {
-        style: Style {
-            width: Val::Percent(100.),
-            height: Val::Percent(100.),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
             ..default()
-        },
-        ..default()
-    })
-    .with_children(|parent| {
-        let colors = [KnightColor::Blue, KnightColor::Purple, KnightColor::Red, KnightColor::Yellow];
-        for color in colors {
-            parent
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            width: Val::Px(150.),
-                            height: Val::Px(50.),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::all(Val::Px(20.)),
+        })
+        .with_children(|parent| {
+            let colors = [
+                KnightColor::Blue,
+                KnightColor::Purple,
+                KnightColor::Red,
+                KnightColor::Yellow,
+            ];
+            for color in colors {
+                parent
+                    .spawn((
+                        ButtonBundle {
+                            style: Style {
+                                width: Val::Px(150.),
+                                height: Val::Px(50.),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::all(Val::Px(20.)),
+                                ..default()
+                            },
+                            image: image.clone().into(),
                             ..default()
                         },
-                        image: image.clone().into(),
-                        ..default()
-                    },
-                    ImageScaleMode::Sliced(slicer.clone()),
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(format!("{:?}", color), TextStyle {
-                        font_size: 40.,
-                        color: Color::DARK_GRAY,
-                        ..default()
-                    },
-                ));
-            });
-        }
-    });
+                        ImageScaleMode::Sliced(slicer.clone()),
+                    ))
+                    .with_children(|parent| {
+                        parent.spawn(TextBundle::from_section(
+                            format!("{:?}", color),
+                            TextStyle {
+                                font_size: 40.,
+                                color: Color::DARK_GRAY,
+                                ..default()
+                            },
+                        ));
+                    });
+            }
+        });
 }
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>, mut next_state: ResMut<NextState<AppState>>) {
+fn setup_background(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("floors/floor_1.png"),
