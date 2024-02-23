@@ -65,6 +65,7 @@ fn main() {
                     KnightBundle::move_sprite,
                     KnightBundle::collisions,
                     GoblinBundle::spawn_goblins,
+                    GoblinBundle::update_goblins,
                 )
                     .run_if(in_state(AppState::InGame)
                 ),
@@ -231,12 +232,4 @@ fn animate_sprites(
             };
         }
     }
-}
-
-fn setup_player(
-    commands: Commands,
-    asset_server: Res<AssetServer>,
-    texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    // KnightBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts);
 }

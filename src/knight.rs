@@ -156,7 +156,7 @@ impl KnightBundle {
     pub fn collisions(
         mut commands: Commands,
         mut player_query: Query<(&Transform, &Sprite), With<Pawn>>,
-        mut enemy_query: Query<(Entity, &Transform), With<Enemy>>,
+        enemy_query: Query<(Entity, &Transform), With<Enemy>>,
         keyboard_input: Res<ButtonInput<KeyCode>>,
         mut gizmos: Gizmos,
     ) {
@@ -172,8 +172,8 @@ impl KnightBundle {
         gizmos.circle_2d(sword_pos.center, 32., Color::YELLOW);
 
         for (enemy_entity, enemy_transform) in &mut enemy_query.iter() {
-            let enemy_pos = Aabb2d::new(enemy_transform.translation.truncate(), Vec2::new(32., 32.));
-            gizmos.rect_2d(enemy_pos.center(), 0., Vec2::new(64., 64.), Color::BLUE);
+            let enemy_rect = Rect::from_center_size(enemy_transform.translation.truncate(), Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32));
+            let enemy_pos = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
 
             if keyboard_input.pressed(KeyCode::Space) {
                 let collision = sword_pos.intersects(&enemy_pos);
