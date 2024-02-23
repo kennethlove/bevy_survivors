@@ -1,7 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use bevy::prelude::*;
-use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
+use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
