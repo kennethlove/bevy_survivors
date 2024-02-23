@@ -49,12 +49,17 @@ impl Default for KnightBundle {
 
 impl KnightBundle {
     pub fn setup_sprite(
-        self: Self,
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
-        let filename = match self.color {
+        let color = fastrand::choice(vec![
+            KnightColor::Yellow,
+            KnightColor::Blue,
+            KnightColor::Purple,
+            KnightColor::Red,
+        ]).unwrap();
+        let filename = match color {
             KnightColor::Yellow => "Warrior_Yellow.png",
             KnightColor::Blue => "Warrior_Blue.png",
             KnightColor::Purple => "Warrior_Purple.png",
@@ -77,7 +82,7 @@ impl KnightBundle {
             animation_indices,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Pawn,
-            self.color,
+            color,
         ));
     }
 
