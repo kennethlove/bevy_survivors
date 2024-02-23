@@ -5,7 +5,7 @@ mod knight;
 
 use bevy::{
     prelude::*,
-    window::{Window, WindowTheme},
+    window::{CursorGrabMode, Window, WindowTheme},
 };
 use components::*;
 use constants::*;
@@ -48,10 +48,11 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), setup_menu)
         .add_systems(OnExit(AppState::Menu), cleanup_menu)
-        .add_systems(OnExit(AppState::Menu), setup_player)
+        .add_systems(OnExit(AppState::Menu), KnightBundle::setup_sprite)
         .add_systems(
             Update,
             (
+                grab_mouse,
                 animate_sprites,
                 menu_button_system.run_if(in_state(AppState::Menu)),
                 draw_border,
@@ -168,6 +169,24 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
+fn grab_mouse(
+    mut windows: Query<&mut Window>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    key: Res<ButtonInput<KeyCode>>,
+) {
+    let mut window = windows.single_mut();
+
+    if mouse.just_pressed(MouseButton::Left) {
+        window.cursor.visible = false;
+        window.cursor.grab_mode = CursorGrabMode::Locked;
+    }
+
+    if key.just_pressed(KeyCode::Escape) {
+        window.cursor.visible = true;
+        window.cursor.grab_mode = CursorGrabMode::None;
+    }
+}
+
 fn draw_border(mut gizmos: Gizmos) {
     let safe_area = Vec2::new(SAFE_WIDTH, SAFE_HEIGHT);
     gizmos.rect_2d(Vec2::ZERO, 0., safe_area, Color::WHITE);
@@ -219,5 +238,5 @@ fn setup_player(
     asset_server: Res<AssetServer>,
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    KnightBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts);
+    // KnightBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts);
 }
