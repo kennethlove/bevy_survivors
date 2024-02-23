@@ -117,9 +117,9 @@ impl KnightBundle {
                 sprite.flip_x = false;
             }
             if direction != Vec3::ZERO {
-                let mut speed = 100.;
+                let mut speed = 200.;
                 if keyboard_input.pressed(KeyCode::ShiftLeft) || keyboard_input.pressed(KeyCode::ShiftRight) {
-                    speed = 200.;
+                    speed = 300.;
                 }
 
                 let mut new_translation = transform.translation + direction.normalize() * speed * time.delta_seconds();
