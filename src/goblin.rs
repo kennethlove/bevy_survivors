@@ -39,34 +39,6 @@ impl Default for GoblinBundle {
 }
 
 impl GoblinBundle {
-    pub fn setup_sprite(
-        self: Self,
-        commands: &mut Commands,
-        asset_server: &Res<AssetServer>,
-        texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
-        transform: Transform,
-    ) {
-        let texture = asset_server.load("Goblin_Yellow.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(192., 192.), 7, 5, None, None);
-        let texture_atlas_layout = texture_atlas_layouts.add(layout);
-        let animation_indices = IDLE_ANIMATION;
-
-        commands.spawn((
-            SpriteSheetBundle {
-                texture,
-                transform, // Controls the placement of the sprite
-                atlas: TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: animation_indices.first,
-                },
-                ..default()
-            },
-            animation_indices,
-            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            Enemy,
-        ));
-    }
-
     fn find_good_spot(
         goblins: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
@@ -107,7 +79,6 @@ impl GoblinBundle {
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
         goblins: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
-        mut gizmos: Gizmos,
     ) {
         let texture: Handle<Image> = asset_server.load("Goblin_Yellow.png");
         let layout = TextureAtlasLayout::from_grid(Vec2::new(192., 192.), 7, 5, None, None);
