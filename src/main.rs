@@ -66,7 +66,7 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), setup_menu)
         .add_systems(OnExit(AppState::Menu), cleanup_menu)
-        .add_systems(OnExit(AppState::Menu), (setup_goblin, setup_player))
+        .add_systems(OnExit(AppState::Menu), (setup_player))//setup_goblin, ))
         .add_systems(
             Update,
             (
@@ -78,10 +78,13 @@ fn main() {
         .add_systems(
             FixedUpdate,
             (
-                (KnightBundle::move_sprite, KnightBundle::collisions)
+                (
+                    KnightBundle::move_sprite,
+                    KnightBundle::collisions,
+                    GoblinBundle::spawn_goblins,
+                )
                     .run_if(in_state(AppState::InGame)
                 ),
-                spawn_goblin.run_if(in_state(AppState::InGame)),
             )
         )
         .add_systems(Update, bevy::window::close_on_esc)
@@ -95,10 +98,14 @@ fn menu_button_system(
         (Changed<Interaction>, With<Button>),
     >,
     asset_server: Res<AssetServer>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
     let pressed_image = asset_server.load("buttons/Button_Blue_9Slides_Pressed.png");
     let regular_image = asset_server.load("buttons/Button_Blue_9Slides.png");
     let hover_image = asset_server.load("buttons/Button_Hover_9Slides.png");
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        state.set(AppState::InGame);
+    }
     for (interaction, mut ui_image) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
@@ -233,41 +240,41 @@ fn setup_player(
     KnightBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts);
 }
 
-fn setup_goblin(
-    commands: Commands,
-    asset_server: Res<AssetServer>,
-    texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    let transform = Transform::from_translation(Vec3::new(100., 100., 1.));
-    GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
-}
+// fn setup_goblin(
+//     commands: Commands,
+//     asset_server: Res<AssetServer>,
+//     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+// ) {
+//     let transform = Transform::from_translation(Vec3::new(100., 100., 1.));
+//     GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
+// }
 
-fn spawn_goblin(
-    commands: Commands,
-    asset_server: Res<AssetServer>,
-    texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    goblins: Query<Entity, With<Enemy>>,
-) {
-    if goblins.is_empty() {
-        let mut x = fastrand::i32(..) % SAFE_WIDTH as i32;
-        if fastrand::bool() {
-            x = -x;
-        }
-        x = x.clamp(((-SAFE_WIDTH + 32.)/2.) as i32, ((SAFE_WIDTH -32.) / 2.) as i32);
+// fn spawn_goblin(
+//     commands: Commands,
+//     asset_server: Res<AssetServer>,
+//     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+//     goblins: Query<Entity, With<Enemy>>,
+// ) {
+//     if goblins.is_empty() {
+//         let mut x = fastrand::i32(..) % SAFE_WIDTH as i32;
+//         if fastrand::bool() {
+//             x = -x;
+//         }
+//         x = x.clamp(((-SAFE_WIDTH + SPRITE_WIDTH as f32)/2.) as i32, ((SAFE_WIDTH - SPRITE_WIDTH as f32) / 2.) as i32);
 
-        let mut y = fastrand::i32(..) % SAFE_HEIGHT as i32;
-        if fastrand::bool() {
-            y = -y;
-        }
-        y = y.clamp(((-SAFE_HEIGHT + 32.)/2.) as i32, ((SAFE_HEIGHT - 32.)/2.) as i32);
+//         let mut y = fastrand::i32(..) % SAFE_HEIGHT as i32;
+//         if fastrand::bool() {
+//             y = -y;
+//         }
+//         y = y.clamp(((-SAFE_HEIGHT + SPRITE_HEIGHT as f32)/2.) as i32, ((SAFE_HEIGHT - SPRITE_HEIGHT as f32)/2.) as i32);
 
-        let transform = Transform::from_translation(
-            Vec2::new(
-                x as f32,
-                y as f32,
-            ).extend(1.)
-        );
-        println!("Spawning goblin at {:?}", transform.translation);
-        GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
-    }
-}
+//         let transform = Transform::from_translation(
+//             Vec2::new(
+//                 x as f32,
+//                 y as f32,
+//             ).extend(1.)
+//         );
+//         println!("Spawning goblin at {:?}", transform.translation);
+//         GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
+//     }
+// }
