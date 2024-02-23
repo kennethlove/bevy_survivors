@@ -1,3 +1,5 @@
+mod components;
+mod constants;
 mod goblin;
 mod knight;
 
@@ -5,16 +7,11 @@ use bevy::{
     prelude::*,
     window::{Window, WindowTheme},
 };
+use components::*;
+use constants::*;
 use goblin::GoblinBundle;
 use knight::KnightBundle;
 
-const WIDTH: f32 = 800.;
-const HEIGHT: f32 = 600.;
-const SPRITE_WIDTH: u32 = 32;
-const SPRITE_HEIGHT: u32 = 32;
-const SAFE_BUFFER: f32 = SPRITE_WIDTH as f32 * 1.75;
-const SAFE_WIDTH: f32 = WIDTH as f32 - SAFE_BUFFER;
-const SAFE_HEIGHT: f32 = HEIGHT as f32 - SAFE_BUFFER;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -24,21 +21,6 @@ enum AppState {
     InGame,
     Finished,
 }
-
-#[derive(Component)]
-pub struct Pawn;
-
-#[derive(Component)]
-pub struct Enemy;
-
-#[derive(Clone, Component, Debug)]
-pub struct AnimationIndices {
-    first: usize,
-    last: usize,
-}
-
-#[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(Timer);
 
 fn main() {
     App::new()
@@ -66,7 +48,7 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), setup_menu)
         .add_systems(OnExit(AppState::Menu), cleanup_menu)
-        .add_systems(OnExit(AppState::Menu), (setup_player))//setup_goblin, ))
+        .add_systems(OnExit(AppState::Menu), setup_player)
         .add_systems(
             Update,
             (
@@ -239,42 +221,3 @@ fn setup_player(
 ) {
     KnightBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts);
 }
-
-// fn setup_goblin(
-//     commands: Commands,
-//     asset_server: Res<AssetServer>,
-//     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-// ) {
-//     let transform = Transform::from_translation(Vec3::new(100., 100., 1.));
-//     GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
-// }
-
-// fn spawn_goblin(
-//     commands: Commands,
-//     asset_server: Res<AssetServer>,
-//     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-//     goblins: Query<Entity, With<Enemy>>,
-// ) {
-//     if goblins.is_empty() {
-//         let mut x = fastrand::i32(..) % SAFE_WIDTH as i32;
-//         if fastrand::bool() {
-//             x = -x;
-//         }
-//         x = x.clamp(((-SAFE_WIDTH + SPRITE_WIDTH as f32)/2.) as i32, ((SAFE_WIDTH - SPRITE_WIDTH as f32) / 2.) as i32);
-
-//         let mut y = fastrand::i32(..) % SAFE_HEIGHT as i32;
-//         if fastrand::bool() {
-//             y = -y;
-//         }
-//         y = y.clamp(((-SAFE_HEIGHT + SPRITE_HEIGHT as f32)/2.) as i32, ((SAFE_HEIGHT - SPRITE_HEIGHT as f32)/2.) as i32);
-
-//         let transform = Transform::from_translation(
-//             Vec2::new(
-//                 x as f32,
-//                 y as f32,
-//             ).extend(1.)
-//         );
-//         println!("Spawning goblin at {:?}", transform.translation);
-//         GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
-//     }
-// }

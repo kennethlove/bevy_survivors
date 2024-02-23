@@ -1,4 +1,5 @@
-use crate::{AnimationIndices, AnimationTimer, Enemy, Pawn, SAFE_HEIGHT, SAFE_WIDTH};
+use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
+use crate::constants::*;
 use bevy::input::keyboard::KeyCode;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
