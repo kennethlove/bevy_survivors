@@ -249,25 +249,25 @@ fn spawn_goblin(
     goblins: Query<Entity, With<Enemy>>,
 ) {
     if goblins.is_empty() {
-        let x = fastrand::i32(..) % SAFE_WIDTH as i32;
+        let mut x = fastrand::i32(..) % SAFE_WIDTH as i32;
         if fastrand::bool() {
-            let x = -x;
+            x = -x;
         }
-        let x = x as f32;
-        let y = fastrand::i32(..) % SAFE_HEIGHT as i32;
+        x = x.clamp(((-SAFE_WIDTH + 32.)/2.) as i32, ((SAFE_WIDTH -32.) / 2.) as i32);
+
+        let mut y = fastrand::i32(..) % SAFE_HEIGHT as i32;
         if fastrand::bool() {
-            let y = -y;
+            y = -y;
         }
-        let y = y as f32;
+        y = y.clamp(((-SAFE_HEIGHT + 32.)/2.) as i32, ((SAFE_HEIGHT - 32.)/2.) as i32);
 
         let transform = Transform::from_translation(
             Vec2::new(
-                x,
-                y,
+                x as f32,
+                y as f32,
             ).extend(1.)
         );
         println!("Spawning goblin at {:?}", transform.translation);
         GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
-    } else {
     }
 }
