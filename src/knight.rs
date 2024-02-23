@@ -111,7 +111,12 @@ impl KnightBundle {
                 sprite.flip_x = false;
             }
             if direction != Vec3::ZERO {
-                let mut new_translation = transform.translation + direction.normalize() * 100. * time.delta_seconds();
+                let mut speed = 100.;
+                if keyboard_input.pressed(KeyCode::ShiftLeft) || keyboard_input.pressed(KeyCode::ShiftRight) {
+                    speed = 200.;
+                }
+
+                let mut new_translation = transform.translation + direction.normalize() * speed * time.delta_seconds();
 
                 new_translation.x = new_translation.x.clamp(-SAFE_WIDTH / 2., SAFE_WIDTH / 2.);
                 new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
@@ -123,7 +128,6 @@ impl KnightBundle {
                 );
 
                 new_animation_indices = RUN_ANIMATION;
-                info!("{:?}", new_translation);
             }
 
             if keyboard_input.pressed(KeyCode::Space) {
