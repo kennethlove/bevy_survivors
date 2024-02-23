@@ -1,4 +1,4 @@
-use crate::{AnimationIndices, AnimationTimer, Enemy, Pawn};
+use crate::{AnimationIndices, AnimationTimer, Enemy, Pawn, SAFE_HEIGHT, SAFE_WIDTH};
 use bevy::input::keyboard::KeyCode;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
@@ -41,7 +41,7 @@ impl Default for KnightBundle {
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn,
-            color: KnightColor::Red,
+            color: KnightColor::Purple,
         }
     }
 }
@@ -111,8 +111,19 @@ impl KnightBundle {
                 sprite.flip_x = false;
             }
             if direction != Vec3::ZERO {
-                transform.translation += direction.normalize() * 100. * time.delta_seconds();
+                let mut new_translation = transform.translation + direction.normalize() * 100. * time.delta_seconds();
+
+                new_translation.x = new_translation.x.clamp(-SAFE_WIDTH / 2., SAFE_WIDTH / 2.);
+                new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
+
+                transform.translation = Vec3::new(
+                    new_translation.x,
+                    new_translation.y,
+                    2.,
+                );
+
                 new_animation_indices = RUN_ANIMATION;
+                info!("{:?}", new_translation);
             }
 
             if keyboard_input.pressed(KeyCode::Space) {

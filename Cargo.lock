@@ -879,6 +879,7 @@ name = "bevy_survivors"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "fastrand",
 ]
 
 [[package]]

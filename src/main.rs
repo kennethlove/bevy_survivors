@@ -4,10 +4,17 @@ mod knight;
 use bevy::{
     prelude::*,
     window::{Window, WindowTheme},
-    winit::WinitSettings,
 };
 use goblin::GoblinBundle;
-use knight::{KnightBundle, KnightColor};
+use knight::KnightBundle;
+
+const WIDTH: f32 = 800.;
+const HEIGHT: f32 = 600.;
+const SPRITE_WIDTH: u32 = 32;
+const SPRITE_HEIGHT: u32 = 32;
+const SAFE_BUFFER: f32 = SPRITE_WIDTH as f32 * 1.75;
+const SAFE_WIDTH: f32 = WIDTH as f32 - SAFE_BUFFER;
+const SAFE_HEIGHT: f32 = HEIGHT as f32 - SAFE_BUFFER;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -40,7 +47,6 @@ fn main() {
             color: Color::WHITE,
             brightness: 0.5,
         })
-        .insert_resource(WinitSettings::desktop_app())
         .init_state::<AppState>()
         .add_plugins(
             DefaultPlugins
@@ -48,7 +54,7 @@ fn main() {
                     primary_window: Some(Window {
                         prevent_default_event_handling: false,
                         resizable: false,
-                        resolution: Vec2 { x: 800., y: 600. }.into(),
+                        resolution: Vec2 { x: WIDTH, y: HEIGHT }.into(),
                         title: "Survivors".into(),
                         window_theme: Some(WindowTheme::Dark),
                         ..default()
@@ -59,24 +65,31 @@ fn main() {
         )
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), setup_menu)
-        .add_systems(OnEnter(AppState::InGame), (setup_goblin, setup_player))
+        .add_systems(OnExit(AppState::Menu), cleanup_menu)
+        .add_systems(OnExit(AppState::Menu), (setup_goblin, setup_player))
         .add_systems(
             Update,
             (
                 animate_sprites,
                 menu_button_system.run_if(in_state(AppState::Menu)),
+                draw_border,
             ),
         )
-        // .add_systems(
-        //     FixedUpdate,
-        //     (KnightBundle::move_sprite, KnightBundle::collisions),
-        // )
+        .add_systems(
+            FixedUpdate,
+            (
+                (KnightBundle::move_sprite, KnightBundle::collisions)
+                    .run_if(in_state(AppState::InGame)
+                ),
+                spawn_goblin.run_if(in_state(AppState::InGame)),
+            )
+        )
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
 
 fn menu_button_system(
-    mut state: ResMut<State<AppState>>,
+    mut state: ResMut<NextState<AppState>>,
     mut interaction_query: Query<
         (&Interaction, &mut UiImage),
         (Changed<Interaction>, With<Button>),
@@ -90,6 +103,7 @@ fn menu_button_system(
         match *interaction {
             Interaction::Pressed => {
                 ui_image.texture = pressed_image.clone();
+                state.set(AppState::InGame)
             }
             Interaction::Hovered => {
                 ui_image.texture = hover_image.clone();
@@ -123,45 +137,51 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .with_children(|parent| {
-            let colors = [
-                KnightColor::Blue,
-                KnightColor::Purple,
-                KnightColor::Red,
-                KnightColor::Yellow,
-            ];
-            for color in colors {
-                parent
-                    .spawn((
-                        ButtonBundle {
-                            style: Style {
-                                width: Val::Px(150.),
-                                height: Val::Px(50.),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                margin: UiRect::all(Val::Px(20.)),
-                                ..default()
-                            },
-                            image: image.clone().into(),
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(150.),
+                            height: Val::Px(50.),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::all(Val::Px(20.)),
                             ..default()
                         },
-                        ImageScaleMode::Sliced(slicer.clone()),
-                    ))
-                    .with_children(|parent| {
-                        parent.spawn(TextBundle::from_section(
-                            format!("{:?}", color),
-                            TextStyle {
-                                font_size: 40.,
-                                color: Color::DARK_GRAY,
-                                ..default()
-                            },
-                        ));
-                    });
-            }
+                        image: image.clone().into(),
+                        ..default()
+                    },
+                    ImageScaleMode::Sliced(slicer.clone()),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Play".to_string(),
+                        TextStyle {
+                            font_size: 40.,
+                            color: Color::DARK_GRAY,
+                            ..default()
+                        },
+                    ));
+                });
         });
+}
+
+fn cleanup_menu(
+    mut commands: Commands,
+    interaction_query: Query<(Entity, &Interaction, &mut UiImage), With<Button>>,
+) {
+    for entity in &mut interaction_query.iter() {
+        commands.entity(entity.0).despawn_recursive();
+    }
 }
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+}
+
+fn draw_border(mut gizmos: Gizmos) {
+    let safe_area = Vec2::new(SAFE_WIDTH, SAFE_HEIGHT);
+    gizmos.rect_2d(Vec2::ZERO, 0., safe_area, Color::WHITE);
 }
 
 fn setup_background(
@@ -174,7 +194,7 @@ fn setup_background(
             texture: asset_server.load("floors/floor_1.png"),
             transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
             sprite: Sprite {
-                custom_size: Some(Vec2::from((800., 600.))),
+                custom_size: Some(Vec2::new(WIDTH, HEIGHT)),
                 ..default()
             },
             ..default()
@@ -218,6 +238,36 @@ fn setup_goblin(
     asset_server: Res<AssetServer>,
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let transform = Transform::from_translation(Vec3::new(100., 100., 0.));
+    let transform = Transform::from_translation(Vec3::new(100., 100., 1.));
     GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
+}
+
+fn spawn_goblin(
+    commands: Commands,
+    asset_server: Res<AssetServer>,
+    texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    goblins: Query<Entity, With<Enemy>>,
+) {
+    if goblins.is_empty() {
+        let x = fastrand::i32(..) % SAFE_WIDTH as i32;
+        if fastrand::bool() {
+            let x = -x;
+        }
+        let x = x as f32;
+        let y = fastrand::i32(..) % SAFE_HEIGHT as i32;
+        if fastrand::bool() {
+            let y = -y;
+        }
+        let y = y as f32;
+
+        let transform = Transform::from_translation(
+            Vec2::new(
+                x,
+                y,
+            ).extend(1.)
+        );
+        println!("Spawning goblin at {:?}", transform.translation);
+        GoblinBundle::default().setup_sprite(commands, asset_server, texture_atlas_layouts, transform);
+    } else {
+    }
 }
