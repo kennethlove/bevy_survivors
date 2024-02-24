@@ -1,7 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
-use bevy::prelude::*;
+use bevy::{animation, prelude::*};
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
@@ -107,14 +107,26 @@ impl GoblinBundle {
     }
 
     pub fn update_goblins(
-        mut query: Query<&Transform, With<Enemy>>,
+        mut params: ParamSet<(
+            Query<&Transform, With<Pawn>>,
+            Query<(&mut Transform, &mut AnimationIndices), With<Enemy>>
+        )>,
         mut gizmos: Gizmos,
     ) {
-        for transform in &mut query {
+        for (transform, _) in &mut params.p1() {
             let image_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
             let scaled = image_size * transform.scale.truncate();
             let bounding_box = Rect::from_center_size(transform.translation.truncate(), scaled);
             gizmos.rect_2d(bounding_box.center(), 0., bounding_box.size(), Color::WHITE);
+        }
+
+        let player_pos = params.p0().single().translation;
+        for (mut transform, mut animation_indices) in &mut params.p1() {
+            let mut direction = player_pos - transform.translation;
+            direction = direction.normalize();
+            transform.translation += direction;
+            animation_indices.first = RUN_ANIMATION.first;
+            animation_indices.last = RUN_ANIMATION.last;
         }
     }
 }
