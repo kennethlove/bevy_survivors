@@ -212,7 +212,7 @@ fn setup_background(
         ImageScaleMode::Tiled {
             tile_x: true,
             tile_y: true,
-            stretch_value: 2,
+            stretch_value: 2.,
         },
     ));
 

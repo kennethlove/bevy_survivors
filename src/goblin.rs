@@ -6,8 +6,8 @@ use bevy::{animation, prelude::*};
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
 const ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 13,
-    last: 15,
+    first: 14,
+    last: 20,
 };
 const HEAVY_ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
     first: 16,
@@ -109,12 +109,20 @@ impl GoblinBundle {
     pub fn update_goblins(
         mut params: ParamSet<(
             Query<&Transform, With<Pawn>>,
-            Query<(&mut Transform, &mut AnimationIndices, &mut Sprite), With<Enemy>>,
+            Query<
+                (
+                    &mut Transform,
+                    &mut AnimationIndices,
+                    &mut TextureAtlas,
+                    &mut Sprite,
+                ),
+                With<Enemy>,
+            >,
         )>,
         mut gizmos: Gizmos,
     ) {
         if DRAW_GIZMOS {
-            for (transform, _, _) in &mut params.p1() {
+            for (transform, _, _, _) in &mut params.p1() {
                 let image_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
                 let scaled = image_size * transform.scale.truncate();
                 let bounding_box = Rect::from_center_size(transform.translation.truncate(), scaled);
@@ -123,13 +131,25 @@ impl GoblinBundle {
         }
 
         let player_pos = params.p0().single().translation;
-        for (mut transform, mut animation_indices, mut sprite) in &mut params.p1() {
+        for (mut transform, mut animation_indices, mut atlas, mut sprite) in &mut params.p1() {
             let mut direction = player_pos - transform.translation;
             direction = direction.normalize();
             sprite.flip_x = direction.x < 0.;
             transform.translation += direction * GOBLIN_SPEED;
-            animation_indices.first = RUN_ANIMATION.first;
-            animation_indices.last = RUN_ANIMATION.last;
+            let mut new_animation_indices = IDLE_ANIMATION.clone();
+            new_animation_indices.first = RUN_ANIMATION.first;
+            new_animation_indices.last = RUN_ANIMATION.last;
+
+            if player_pos.distance(transform.translation) < 100. {
+                new_animation_indices.first = ATTACK_ANIMATION.first;
+                new_animation_indices.last = ATTACK_ANIMATION.last;
+            }
+
+            animation_indices.first = new_animation_indices.first;
+            animation_indices.last = new_animation_indices.last;
+            if atlas.index > animation_indices.last || atlas.index < animation_indices.first {
+                atlas.index = animation_indices.first;
+            }
         }
     }
 }
