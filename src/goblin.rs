@@ -109,12 +109,12 @@ impl GoblinBundle {
     pub fn update_goblins(
         mut params: ParamSet<(
             Query<&Transform, With<Pawn>>,
-            Query<(&mut Transform, &mut AnimationIndices), With<Enemy>>,
+            Query<(&mut Transform, &mut AnimationIndices, &mut Sprite), With<Enemy>>,
         )>,
         mut gizmos: Gizmos,
     ) {
         if DRAW_GIZMOS {
-            for (transform, _) in &mut params.p1() {
+            for (transform, _, _) in &mut params.p1() {
                 let image_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
                 let scaled = image_size * transform.scale.truncate();
                 let bounding_box = Rect::from_center_size(transform.translation.truncate(), scaled);
@@ -123,9 +123,10 @@ impl GoblinBundle {
         }
 
         let player_pos = params.p0().single().translation;
-        for (mut transform, mut animation_indices) in &mut params.p1() {
+        for (mut transform, mut animation_indices, mut sprite) in &mut params.p1() {
             let mut direction = player_pos - transform.translation;
             direction = direction.normalize();
+            sprite.flip_x = direction.x < 0.;
             transform.translation += direction * GOBLIN_SPEED;
             animation_indices.first = RUN_ANIMATION.first;
             animation_indices.last = RUN_ANIMATION.last;
