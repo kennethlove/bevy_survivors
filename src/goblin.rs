@@ -3,15 +3,21 @@ use crate::constants::*;
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::{animation, prelude::*};
 
-const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
-const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
+const IDLE_ANIMATION: AnimationIndices = AnimationIndices {
+    first: 112,
+    last: 113,
+};
+const RUN_ANIMATION: AnimationIndices = AnimationIndices {
+    first: 112,
+    last: 119,
+};
 const ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 14,
-    last: 20,
+    first: 112,
+    last: 113,
 };
 const HEAVY_ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 16,
-    last: 22,
+    first: 112,
+    last: 119,
 };
 
 #[derive(Component)]
@@ -19,7 +25,7 @@ struct Torch;
 
 #[derive(Bundle)]
 pub struct GoblinBundle {
-    pub transform: Transform,
+    // pub transform: Transform,
     pub sprite: SpriteSheetBundle,
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
@@ -29,8 +35,7 @@ pub struct GoblinBundle {
 impl Default for GoblinBundle {
     fn default() -> Self {
         GoblinBundle {
-            transform: Transform::from_translation(Vec3::new(100., 100., 0.)),
-            sprite: SpriteSheetBundle { ..default() },
+            sprite: SpriteSheetBundle::default(),
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Enemy,
@@ -80,14 +85,15 @@ impl GoblinBundle {
         goblins: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
     ) {
-        let texture: Handle<Image> = asset_server.load("Goblin_Yellow.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(192., 192.), 7, 5, None, None);
+        let texture: Handle<Image> = asset_server.load("16x32.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 32.), 8, 64, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
         if goblins.iter().count() < 3 {
             let transform =
                 Transform::from_translation(GoblinBundle::find_good_spot(goblins, player));
+            let transform = transform.with_scale(Vec3::splat(2.));
 
             commands.spawn((
                 SpriteSheetBundle {

@@ -4,8 +4,8 @@ use bevy::input::keyboard::KeyCode;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 
-const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 5 };
-const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 6, last: 12 };
+const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
+const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 7 };
 const ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
     first: 13,
     last: 15,
@@ -53,21 +53,22 @@ impl KnightBundle {
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
-        let color = fastrand::choice(vec![
-            KnightColor::Yellow,
-            KnightColor::Blue,
-            KnightColor::Purple,
-            KnightColor::Red,
-        ])
-        .unwrap();
-        let filename = match color {
-            KnightColor::Yellow => "Warrior_Yellow.png",
-            KnightColor::Blue => "Warrior_Blue.png",
-            KnightColor::Purple => "Warrior_Purple.png",
-            KnightColor::Red => "Warrior_Red.png",
-        };
-        let texture = asset_server.load(filename);
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(192., 192.), 6, 8, None, None);
+        // let color = fastrand::choice(vec![
+        //     KnightColor::Yellow,
+        //     KnightColor::Blue,
+        //     KnightColor::Purple,
+        //     KnightColor::Red,
+        // ])
+        // .unwrap();
+        // let filename = match color {
+        //     KnightColor::Yellow => "Warrior_Yellow.png",
+        //     KnightColor::Blue => "Warrior_Blue.png",
+        //     KnightColor::Purple => "Warrior_Purple.png",
+        //     KnightColor::Red => "Warrior_Red.png",
+        // };
+
+        let texture = asset_server.load("16x32.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 32.), 8, 64, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
@@ -78,12 +79,12 @@ impl KnightBundle {
                     layout: texture_atlas_layout,
                     index: animation_indices.first,
                 },
+                transform: Transform::from_scale(Vec3::splat(2.)),
                 ..default()
             },
             animation_indices,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Pawn,
-            color,
         ));
     }
 
