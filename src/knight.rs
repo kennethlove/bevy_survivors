@@ -58,7 +58,8 @@ impl KnightBundle {
             KnightColor::Blue,
             KnightColor::Purple,
             KnightColor::Red,
-        ]).unwrap();
+        ])
+        .unwrap();
         let filename = match color {
             KnightColor::Yellow => "Warrior_Yellow.png",
             KnightColor::Blue => "Warrior_Blue.png",
@@ -117,21 +118,20 @@ impl KnightBundle {
                 sprite.flip_x = false;
             }
             if direction != Vec3::ZERO {
-                let mut speed = 200.;
-                if keyboard_input.pressed(KeyCode::ShiftLeft) || keyboard_input.pressed(KeyCode::ShiftRight) {
-                    speed = 300.;
+                let mut speed = KNIGHT_SPEED;
+                if keyboard_input.pressed(KeyCode::ShiftLeft)
+                    || keyboard_input.pressed(KeyCode::ShiftRight)
+                {
+                    speed = KNIGHT_SPEED_FAST;
                 }
 
-                let mut new_translation = transform.translation + direction.normalize() * speed * time.delta_seconds();
+                let mut new_translation =
+                    transform.translation + direction.normalize() * speed * time.delta_seconds();
 
                 new_translation.x = new_translation.x.clamp(-SAFE_WIDTH / 2., SAFE_WIDTH / 2.);
                 new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
 
-                transform.translation = Vec3::new(
-                    new_translation.x,
-                    new_translation.y,
-                    2.,
-                );
+                transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
 
                 new_animation_indices = RUN_ANIMATION;
             }
@@ -172,7 +172,10 @@ impl KnightBundle {
         gizmos.circle_2d(sword_pos.center, 32., Color::YELLOW);
 
         for (enemy_entity, enemy_transform) in &mut enemy_query.iter() {
-            let enemy_rect = Rect::from_center_size(enemy_transform.translation.truncate(), Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32));
+            let enemy_rect = Rect::from_center_size(
+                enemy_transform.translation.truncate(),
+                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32),
+            );
             let enemy_pos = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
 
             if keyboard_input.pressed(KeyCode::Space) {

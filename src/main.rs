@@ -12,7 +12,6 @@ use constants::*;
 use goblin::GoblinBundle;
 use knight::KnightBundle;
 
-
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
     #[default]
@@ -36,7 +35,11 @@ fn main() {
                     primary_window: Some(Window {
                         prevent_default_event_handling: false,
                         resizable: false,
-                        resolution: Vec2 { x: WIDTH, y: HEIGHT }.into(),
+                        resolution: Vec2 {
+                            x: WIDTH,
+                            y: HEIGHT,
+                        }
+                        .into(),
                         title: "Survivors".into(),
                         window_theme: Some(WindowTheme::Dark),
                         ..default()
@@ -60,16 +63,13 @@ fn main() {
         )
         .add_systems(
             FixedUpdate,
-            (
-                (
-                    KnightBundle::move_sprite,
-                    KnightBundle::collisions,
-                    GoblinBundle::spawn_goblins,
-                    GoblinBundle::update_goblins,
-                )
-                    .run_if(in_state(AppState::InGame)
-                ),
+            ((
+                KnightBundle::move_sprite,
+                KnightBundle::collisions,
+                GoblinBundle::spawn_goblins,
+                GoblinBundle::update_goblins,
             )
+                .run_if(in_state(AppState::InGame)),),
         )
         .add_systems(Update, bevy::window::close_on_esc)
         .run();

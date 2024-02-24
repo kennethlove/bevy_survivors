@@ -85,7 +85,7 @@ impl GoblinBundle {
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
-        if goblins.iter().count() < 5 {
+        if goblins.iter().count() < 1 {
             let transform =
                 Transform::from_translation(GoblinBundle::find_good_spot(goblins, player));
 
@@ -109,22 +109,24 @@ impl GoblinBundle {
     pub fn update_goblins(
         mut params: ParamSet<(
             Query<&Transform, With<Pawn>>,
-            Query<(&mut Transform, &mut AnimationIndices), With<Enemy>>
+            Query<(&mut Transform, &mut AnimationIndices), With<Enemy>>,
         )>,
         mut gizmos: Gizmos,
     ) {
-        for (transform, _) in &mut params.p1() {
-            let image_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
-            let scaled = image_size * transform.scale.truncate();
-            let bounding_box = Rect::from_center_size(transform.translation.truncate(), scaled);
-            gizmos.rect_2d(bounding_box.center(), 0., bounding_box.size(), Color::WHITE);
+        if DRAW_GIZMOS {
+            for (transform, _) in &mut params.p1() {
+                let image_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
+                let scaled = image_size * transform.scale.truncate();
+                let bounding_box = Rect::from_center_size(transform.translation.truncate(), scaled);
+                gizmos.rect_2d(bounding_box.center(), 0., bounding_box.size(), Color::WHITE);
+            }
         }
 
         let player_pos = params.p0().single().translation;
         for (mut transform, mut animation_indices) in &mut params.p1() {
             let mut direction = player_pos - transform.translation;
             direction = direction.normalize();
-            transform.translation += direction;
+            transform.translation += direction * GOBLIN_SPEED;
             animation_indices.first = RUN_ANIMATION.first;
             animation_indices.last = RUN_ANIMATION.last;
         }
