@@ -5,6 +5,7 @@ mod knight;
 
 use bevy::{
     prelude::*,
+    render::view::visibility::RenderLayers,
     window::{CursorGrabMode, Window, WindowTheme},
 };
 use components::*;
@@ -167,7 +168,7 @@ fn cleanup_menu(
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn((Camera2dBundle::default(), MainCamera));
 }
 
 fn grab_mouse(
@@ -211,7 +212,7 @@ fn setup_background(
         ImageScaleMode::Tiled {
             tile_x: true,
             tile_y: true,
-            stretch_value: 2.,
+            stretch_value: 2,
         },
     ));
 

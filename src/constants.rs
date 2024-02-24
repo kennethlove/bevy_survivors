@@ -13,4 +13,4 @@ pub const SAFE_HEIGHT: f32 = HEIGHT as f32 - SAFE_BUFFER;
 pub const KNIGHT_SPEED: f32 = 200.;
 pub const KNIGHT_SPEED_FAST: f32 = 300.;
 
-pub const GOBLIN_SPEED: f32 = 0.1;
+pub const GOBLIN_SPEED: f32 = 0.5;

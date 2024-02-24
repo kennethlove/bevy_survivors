@@ -85,7 +85,7 @@ impl GoblinBundle {
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
-        if goblins.iter().count() < 1 {
+        if goblins.iter().count() < 3 {
             let transform =
                 Transform::from_translation(GoblinBundle::find_good_spot(goblins, player));
 

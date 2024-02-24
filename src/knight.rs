@@ -169,7 +169,9 @@ impl KnightBundle {
 
         let mut sword_pos = BoundingCircle::new(sword_position, 32.);
         sword_pos.center += Vec2::new(28., 0.);
-        gizmos.circle_2d(sword_pos.center, 32., Color::YELLOW);
+        if DRAW_GIZMOS {
+            gizmos.circle_2d(sword_pos.center, 32., Color::YELLOW);
+        }
 
         for (enemy_entity, enemy_transform) in &mut enemy_query.iter() {
             let enemy_rect = Rect::from_center_size(
@@ -181,7 +183,6 @@ impl KnightBundle {
             if keyboard_input.pressed(KeyCode::Space) {
                 let collision = sword_pos.intersects(&enemy_pos);
                 if collision {
-                    info!("Player collided with enemy!");
                     info!("Player attacked enemy!");
                     commands.entity(enemy_entity).despawn();
                 }
