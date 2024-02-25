@@ -83,9 +83,9 @@ impl GoblinBundle {
         let animation_indices = IDLE_ANIMATION;
 
         if goblins.iter().count() < 3 {
-            let transform =
+            let mut transform =
                 Transform::from_translation(GoblinBundle::find_good_spot(goblins, player));
-            // let transform = transform.with_scale(Vec3::splat(2.));
+            transform = transform.with_scale(Vec3::splat(2.));
 
             commands.spawn((
                 SpriteSheetBundle {

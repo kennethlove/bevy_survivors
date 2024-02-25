@@ -47,7 +47,7 @@ impl PawnBundle {
                     layout: texture_atlas_layout,
                     index: animation_indices.first,
                 },
-                // transform: Transform::from_scale(Vec3::splat(2.)),
+                transform: Transform::from_scale(Vec3::splat(2.)),
                 ..default()
             },
             animation_indices,
@@ -87,11 +87,11 @@ impl PawnBundle {
                 sprite.flip_x = false;
             }
             if direction != Vec3::ZERO {
-                let mut speed = KNIGHT_SPEED;
+                let mut speed = PAWN_SPEED;
                 if keyboard_input.pressed(KeyCode::ShiftLeft)
                     || keyboard_input.pressed(KeyCode::ShiftRight)
                 {
-                    speed = KNIGHT_SPEED_FAST;
+                    speed = PAWN_SPEED_FAST;
                 }
 
                 let mut new_translation =
