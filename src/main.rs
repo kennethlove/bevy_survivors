@@ -1,7 +1,7 @@
 mod components;
 mod constants;
 mod goblin;
-mod knight;
+mod pawn;
 
 use bevy::{
     prelude::*,
@@ -11,7 +11,7 @@ use bevy::{
 use components::*;
 use constants::*;
 use goblin::GoblinBundle;
-use knight::KnightBundle;
+use pawn::PawnBundle;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -52,7 +52,7 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), setup_menu)
         .add_systems(OnExit(AppState::Menu), cleanup_menu)
-        .add_systems(OnExit(AppState::Menu), KnightBundle::setup_sprite)
+        .add_systems(OnExit(AppState::Menu), PawnBundle::setup_sprite)
         .add_systems(
             Update,
             (
@@ -65,8 +65,8 @@ fn main() {
         .add_systems(
             FixedUpdate,
             ((
-                KnightBundle::move_sprite,
-                KnightBundle::collisions,
+                PawnBundle::move_sprite,
+                PawnBundle::collisions,
                 GoblinBundle::spawn_goblins,
                 GoblinBundle::update_goblins,
             )
@@ -212,7 +212,7 @@ fn setup_background(
         ImageScaleMode::Tiled {
             tile_x: true,
             tile_y: true,
-            stretch_value: 2.,
+            stretch_value: 1.,
         },
     ));
 

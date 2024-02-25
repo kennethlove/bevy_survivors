@@ -6,67 +6,35 @@ use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 7 };
-const ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 13,
-    last: 15,
-};
-const HEAVY_ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 16,
-    last: 22,
-};
 const STARTING_POSITION: Vec3 = Vec3::new(0., 0., 2.);
 
-#[derive(Component, Debug)]
-pub enum KnightColor {
-    Yellow,
-    Blue,
-    Purple,
-    Red,
-}
-
 #[derive(Bundle)]
-pub struct KnightBundle {
+pub struct PawnBundle {
     transform: Transform,
     sprite: SpriteSheetBundle,
     animation_indices: AnimationIndices,
     animation_timer: AnimationTimer,
     pawn: Pawn,
-    color: KnightColor,
 }
 
-impl Default for KnightBundle {
+impl Default for PawnBundle {
     fn default() -> Self {
-        KnightBundle {
+        PawnBundle {
             transform: Transform::from_translation(STARTING_POSITION),
             sprite: SpriteSheetBundle::default(),
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn,
-            color: KnightColor::Purple,
         }
     }
 }
 
-impl KnightBundle {
+impl PawnBundle {
     pub fn setup_sprite(
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
-        // let color = fastrand::choice(vec![
-        //     KnightColor::Yellow,
-        //     KnightColor::Blue,
-        //     KnightColor::Purple,
-        //     KnightColor::Red,
-        // ])
-        // .unwrap();
-        // let filename = match color {
-        //     KnightColor::Yellow => "Warrior_Yellow.png",
-        //     KnightColor::Blue => "Warrior_Blue.png",
-        //     KnightColor::Purple => "Warrior_Purple.png",
-        //     KnightColor::Red => "Warrior_Red.png",
-        // };
-
         let texture = asset_server.load("16x32.png");
         let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 32.), 8, 64, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
@@ -79,7 +47,7 @@ impl KnightBundle {
                     layout: texture_atlas_layout,
                     index: animation_indices.first,
                 },
-                transform: Transform::from_scale(Vec3::splat(2.)),
+                // transform: Transform::from_scale(Vec3::splat(2.)),
                 ..default()
             },
             animation_indices,
@@ -135,15 +103,6 @@ impl KnightBundle {
                 transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
 
                 new_animation_indices = RUN_ANIMATION;
-            }
-
-            if keyboard_input.pressed(KeyCode::Space) {
-                new_animation_indices = ATTACK_ANIMATION;
-            }
-            if keyboard_input.pressed(KeyCode::ControlLeft)
-                || keyboard_input.pressed(KeyCode::ControlRight)
-            {
-                new_animation_indices = HEAVY_ATTACK_ANIMATION;
             }
 
             animation_indices.first = new_animation_indices.first;

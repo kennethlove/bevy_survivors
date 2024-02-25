@@ -11,14 +11,6 @@ const RUN_ANIMATION: AnimationIndices = AnimationIndices {
     first: 112,
     last: 119,
 };
-const ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 112,
-    last: 113,
-};
-const HEAVY_ATTACK_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 112,
-    last: 119,
-};
 
 #[derive(Component)]
 struct Torch;
@@ -93,7 +85,7 @@ impl GoblinBundle {
         if goblins.iter().count() < 3 {
             let transform =
                 Transform::from_translation(GoblinBundle::find_good_spot(goblins, player));
-            let transform = transform.with_scale(Vec3::splat(2.));
+            // let transform = transform.with_scale(Vec3::splat(2.));
 
             commands.spawn((
                 SpriteSheetBundle {
@@ -146,9 +138,8 @@ impl GoblinBundle {
             new_animation_indices.first = RUN_ANIMATION.first;
             new_animation_indices.last = RUN_ANIMATION.last;
 
-            if player_pos.distance(transform.translation) < 100. {
-                new_animation_indices.first = ATTACK_ANIMATION.first;
-                new_animation_indices.last = ATTACK_ANIMATION.last;
+            if player_pos.distance(transform.translation) < 50. {
+                info!("Enemy attacks player");
             }
 
             animation_indices.first = new_animation_indices.first;

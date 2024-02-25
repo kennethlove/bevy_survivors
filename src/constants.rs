@@ -1,7 +1,7 @@
 pub const DRAW_GIZMOS: bool = true;
 
-pub const WIDTH: f32 = 800.;
-pub const HEIGHT: f32 = 600.;
+pub const WIDTH: f32 = 600.;
+pub const HEIGHT: f32 = 400.;
 
 pub const SPRITE_WIDTH: u32 = 32;
 pub const SPRITE_HEIGHT: u32 = 32;
