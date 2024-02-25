@@ -1,7 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
-use bevy::{animation, prelude::*};
+use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices {
     first: 112,
@@ -12,11 +12,8 @@ const RUN_ANIMATION: AnimationIndices = AnimationIndices {
     last: 119,
 };
 
-#[derive(Component)]
-struct Torch;
-
 #[derive(Bundle)]
-pub struct GoblinBundle {
+pub struct EnemyBundle {
     // pub transform: Transform,
     pub sprite: SpriteSheetBundle,
     pub animation_indices: AnimationIndices,
@@ -24,9 +21,9 @@ pub struct GoblinBundle {
     pub pawn: Enemy,
 }
 
-impl Default for GoblinBundle {
+impl Default for EnemyBundle {
     fn default() -> Self {
-        GoblinBundle {
+        EnemyBundle {
             sprite: SpriteSheetBundle::default(),
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -35,7 +32,7 @@ impl Default for GoblinBundle {
     }
 }
 
-impl GoblinBundle {
+impl EnemyBundle {
     fn find_good_spot(
         goblins: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
@@ -65,7 +62,7 @@ impl GoblinBundle {
         if Aabb2d::new(translation.truncate(), sprite_area)
             .intersects(&Aabb2d::new(player_pos.truncate(), sprite_area))
         {
-            return GoblinBundle::find_good_spot(goblins, player);
+            return EnemyBundle::find_good_spot(goblins, player);
         }
         translation
     }
@@ -84,7 +81,7 @@ impl GoblinBundle {
 
         if goblins.iter().count() < 3 {
             let mut transform =
-                Transform::from_translation(GoblinBundle::find_good_spot(goblins, player));
+                Transform::from_translation(EnemyBundle::find_good_spot(goblins, player));
             transform = transform.with_scale(Vec3::splat(2.));
 
             commands.spawn((
@@ -133,7 +130,7 @@ impl GoblinBundle {
             let mut direction = player_pos - transform.translation;
             direction = direction.normalize();
             sprite.flip_x = direction.x < 0.;
-            transform.translation += direction * GOBLIN_SPEED;
+            transform.translation += direction * ENEMY_SPEED;
             let mut new_animation_indices = IDLE_ANIMATION.clone();
             new_animation_indices.first = RUN_ANIMATION.first;
             new_animation_indices.last = RUN_ANIMATION.last;

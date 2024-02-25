@@ -1,16 +1,15 @@
 mod components;
 mod constants;
-mod goblin;
+mod enemy;
 mod pawn;
 
 use bevy::{
     prelude::*,
-    render::view::visibility::RenderLayers,
     window::{CursorGrabMode, Window, WindowTheme},
 };
 use components::*;
 use constants::*;
-use goblin::GoblinBundle;
+use enemy::EnemyBundle;
 use pawn::PawnBundle;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
@@ -19,7 +18,6 @@ enum AppState {
     Setup,
     Menu,
     InGame,
-    Finished,
 }
 
 fn main() {
@@ -67,8 +65,8 @@ fn main() {
             ((
                 PawnBundle::move_sprite,
                 PawnBundle::collisions,
-                GoblinBundle::spawn_goblins,
-                GoblinBundle::update_goblins,
+                EnemyBundle::spawn_goblins,
+                EnemyBundle::update_goblins,
             )
                 .run_if(in_state(AppState::InGame)),),
         )
