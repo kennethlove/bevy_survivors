@@ -14,7 +14,6 @@ const RUN_ANIMATION: AnimationIndices = AnimationIndices {
 
 #[derive(Bundle)]
 pub struct EnemyBundle {
-    // pub transform: Transform,
     pub sprite: SpriteSheetBundle,
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
@@ -34,7 +33,7 @@ impl Default for EnemyBundle {
 
 impl EnemyBundle {
     fn find_good_spot(
-        goblins: Query<&Transform, With<Enemy>>,
+        enemies: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
     ) -> Vec3 {
         let player_pos = player.single().translation;
@@ -62,16 +61,16 @@ impl EnemyBundle {
         if Aabb2d::new(translation.truncate(), sprite_area)
             .intersects(&Aabb2d::new(player_pos.truncate(), sprite_area))
         {
-            return EnemyBundle::find_good_spot(goblins, player);
+            return EnemyBundle::find_good_spot(enemies, player);
         }
         translation
     }
 
-    pub fn spawn_goblins(
+    pub fn spawn_enemies(
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-        goblins: Query<&Transform, With<Enemy>>,
+        enemies: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
     ) {
         let texture: Handle<Image> = asset_server.load("16x32.png");
@@ -79,9 +78,9 @@ impl EnemyBundle {
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
-        if goblins.iter().count() < 3 {
+        if enemies.iter().count() < 3 {
             let mut transform =
-                Transform::from_translation(EnemyBundle::find_good_spot(goblins, player));
+                Transform::from_translation(EnemyBundle::find_good_spot(enemies, player));
             transform = transform.with_scale(Vec3::splat(2.));
 
             commands.spawn((
@@ -101,7 +100,7 @@ impl EnemyBundle {
         }
     }
 
-    pub fn update_goblins(
+    pub fn update_enemies(
         mut params: ParamSet<(
             Query<&Transform, With<Pawn>>,
             Query<

@@ -65,8 +65,8 @@ fn main() {
             ((
                 PawnBundle::move_sprite,
                 PawnBundle::collisions,
-                EnemyBundle::spawn_goblins,
-                EnemyBundle::update_goblins,
+                EnemyBundle::spawn_enemies,
+                EnemyBundle::update_enemies,
             )
                 .run_if(in_state(AppState::InGame)),),
         )
