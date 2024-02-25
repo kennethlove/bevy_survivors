@@ -188,8 +188,10 @@ fn grab_mouse(
 }
 
 fn draw_border(mut gizmos: Gizmos) {
-    let safe_area = Vec2::new(SAFE_WIDTH, SAFE_HEIGHT);
-    gizmos.rect_2d(Vec2::ZERO, 0., safe_area, Color::WHITE);
+    if DRAW_GIZMOS {
+        let safe_area = Vec2::new(SAFE_WIDTH, SAFE_HEIGHT);
+        gizmos.rect_2d(Vec2::ZERO, 0., safe_area, Color::WHITE);
+    }
 }
 
 fn setup_background(
