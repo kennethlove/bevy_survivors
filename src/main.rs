@@ -11,12 +11,12 @@ use bevy::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
     },
-    window::{CursorGrabMode, Window, WindowTheme},
+    window::{Window, WindowTheme},
 };
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
-use pawn::PawnBundle;
+use pawn::{PawnBundle, Weapon, WeaponBundle};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -29,10 +29,6 @@ enum AppState {
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(AmbientLight {
-            color: Color::WHITE,
-            brightness: 0.5,
-        })
         .init_state::<AppState>()
         .add_plugins(
             DefaultPlugins
@@ -56,11 +52,10 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))
         .add_systems(OnExit(AppState::Menu), (cleanup_title, cleanup_menu))
-        .add_systems(OnExit(AppState::Menu), PawnBundle::setup_sprite)
+        .add_systems(OnExit(AppState::Menu), (PawnBundle::setup_sprite, WeaponBundle::setup_sprite))
         .add_systems(
             Update,
             (
-                // grab_mouse,
                 animate_sprites,
                 menu_button_system.run_if(in_state(AppState::Menu)),
                 draw_border,
@@ -70,6 +65,8 @@ fn main() {
             FixedUpdate,
             ((
                 PawnBundle::move_sprite,
+                WeaponBundle::move_sprite,
+                WeaponBundle::attack,
                 PawnBundle::collisions,
                 EnemyBundle::spawn_enemies,
                 EnemyBundle::update_enemies,
@@ -301,24 +298,6 @@ fn setup_camera(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     ));
 
     commands.spawn((Camera2dBundle::default(), MainCamera));
-}
-
-fn grab_mouse(
-    mut windows: Query<&mut Window>,
-    mouse: Res<ButtonInput<MouseButton>>,
-    key: Res<ButtonInput<KeyCode>>,
-) {
-    let mut window = windows.single_mut();
-
-    if mouse.just_pressed(MouseButton::Left) {
-        window.cursor.visible = false;
-        window.cursor.grab_mode = CursorGrabMode::Locked;
-    }
-
-    if key.just_pressed(KeyCode::Escape) {
-        window.cursor.visible = true;
-        window.cursor.grab_mode = CursorGrabMode::None;
-    }
 }
 
 fn draw_border(mut gizmos: Gizmos) {
