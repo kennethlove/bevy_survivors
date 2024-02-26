@@ -134,7 +134,7 @@ impl EnemyBundle {
             new_animation_indices.first = RUN_ANIMATION.first;
             new_animation_indices.last = RUN_ANIMATION.last;
 
-            if player_pos.distance(transform.translation) < 50. {
+            if player_pos.distance(transform.translation) < SPRITE_WIDTH as f32 {
                 info!("Enemy attacks player");
             }
 
