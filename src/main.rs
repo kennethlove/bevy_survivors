@@ -11,7 +11,6 @@ use bevy::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
     },
-    sprite::MaterialMesh2dBundle,
     window::{CursorGrabMode, Window, WindowTheme},
 };
 use components::*;
@@ -29,7 +28,7 @@ enum AppState {
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 0.5,
