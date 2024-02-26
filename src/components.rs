@@ -26,3 +26,12 @@ pub struct UICamera;
 
 #[derive(Component)]
 pub struct TitleText;
+
+#[derive(Component)]
+pub struct PlayButton;
+
+#[derive(Component)]
+pub struct OptionsButton;
+
+#[derive(Component)]
+pub struct QuitButton;

@@ -95,7 +95,12 @@ fn menu_button_system(
         let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
-                state.set(AppState::InGame);
+                if text.sections[0].value == "Play" {
+                    state.set(AppState::InGame);
+                } else if text.sections[0].value == "Options" {
+                } else if text.sections[0].value == "Quit" {
+                    std::process::exit(0);
+                }
             }
             Interaction::Hovered => {
                 text.sections[0].style.font_size = 26.0;
@@ -190,6 +195,7 @@ fn setup_menu(
                     ..default()
                 },
                 ImageScaleMode::Sliced(slicer.clone()),
+                PlayButton,
             )).with_children(|parent| {
                 parent.spawn(TextBundle::from_section(
                     "Play".to_string(),
@@ -210,6 +216,7 @@ fn setup_menu(
                     ..default()
                 },
                 ImageScaleMode::Sliced(slicer.clone()),
+                OptionsButton,
             )).with_children(|parent| {
                 parent.spawn(TextBundle::from_section(
                     "Options".to_string(),
@@ -230,6 +237,7 @@ fn setup_menu(
                     ..default()
                 },
                 ImageScaleMode::Sliced(slicer.clone()),
+                QuitButton,
             )).with_children(|parent| {
                 parent.spawn(TextBundle::from_section(
                     "Quit".to_string(),
