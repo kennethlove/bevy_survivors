@@ -23,3 +23,6 @@ pub struct Canvas;
 
 #[derive(Component)]
 pub struct UICamera;
+
+#[derive(Component)]
+pub struct TitleText;

@@ -1,4 +1,5 @@
 pub const DRAW_GIZMOS: bool = false;
+pub const UI_LAYER: RenderLayers = RenderLayers::layer(9);
 
 pub const WIDTH: f32 = 600.;
 pub const HEIGHT: f32 = 400.;

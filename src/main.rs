@@ -13,14 +13,13 @@ use bevy::{
         view::RenderLayers,
     },
     sprite::MaterialMesh2dBundle,
+    transform::commands,
     window::{CursorGrabMode, Window, WindowTheme},
 };
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
 use pawn::PawnBundle;
-
-const UI_LAYER: RenderLayers = RenderLayers::layer(9);
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -58,8 +57,8 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
         )
         .add_systems(Startup, (setup_camera, setup_background))
-        .add_systems(OnEnter(AppState::Menu), setup_menu)
-        .add_systems(OnExit(AppState::Menu), cleanup_menu)
+        .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))
+        .add_systems(OnExit(AppState::Menu), (cleanup_title, cleanup_menu))
         .add_systems(OnExit(AppState::Menu), PawnBundle::setup_sprite)
         .add_systems(
             Update,
@@ -115,6 +114,36 @@ fn menu_button_system(
     }
 }
 
+fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let title_font: Handle<Font> = asset_server.load("fonts/DungeonFont.ttf");
+    commands.spawn((
+        TextBundle::from_section(
+            "Survivors".to_string(),
+            TextStyle {
+                font_size: 100.0,
+                color: Color::WHITE,
+                font: title_font,
+                ..default()
+            },
+        )
+        .with_text_justify(JustifyText::Center)
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            top: Val::Px(100.),
+            left: Val::Px(100.),
+            ..default()
+        }),
+        UI_LAYER,
+        TitleText,
+    ));
+}
+
+fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
 fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     let image = asset_server.load("buttons/Button_Blue_9Slides.png");
 
@@ -141,8 +170,8 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 .spawn((
                     ButtonBundle {
                         style: Style {
-                            width: Val::Px(150.),
-                            height: Val::Px(50.),
+                            width: Val::Px(100.),
+                            height: Val::Px(25.),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             margin: UiRect::all(Val::Px(20.)),
@@ -158,7 +187,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         TextBundle::from_section(
                             "Play".to_string(),
                             TextStyle {
-                                font_size: 40.,
+                                font_size: 20.,
                                 color: Color::DARK_GRAY,
                                 ..default()
                             },
