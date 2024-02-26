@@ -83,30 +83,25 @@ fn main() {
 
 fn menu_button_system(
     mut state: ResMut<NextState<AppState>>,
-    mut interaction_query: Query<
-        (&Interaction, &mut UiImage),
-        (Changed<Interaction>, With<Button>),
-    >,
-    asset_server: Res<AssetServer>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut interaction_query: Query<(&Interaction, &Children), (Changed<Interaction>, With<Button>)>,
+    mut text_query: Query<&mut Text>,
 ) {
-    let pressed_image = asset_server.load("buttons/Button_Blue_9Slides_Pressed.png");
-    let regular_image = asset_server.load("buttons/Button_Blue_9Slides.png");
-    let hover_image = asset_server.load("buttons/Button_Hover_9Slides.png");
     if keyboard_input.just_pressed(KeyCode::Space) {
         state.set(AppState::InGame);
     }
-    for (interaction, mut ui_image) in &mut interaction_query {
+
+    for (interaction, children) in &mut interaction_query {
+        let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
-                ui_image.texture = pressed_image.clone();
-                state.set(AppState::InGame)
+                state.set(AppState::InGame);
             }
             Interaction::Hovered => {
-                ui_image.texture = hover_image.clone();
+                text.sections[0].style.font_size = 26.0;
             }
-            _ => {
-                ui_image.texture = regular_image.clone();
+            Interaction::None => {
+                text.sections[0].style.font_size = 24.0;
             }
         }
     }
@@ -114,26 +109,32 @@ fn menu_button_system(
 
 fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
     let title_font: Handle<Font> = asset_server.load("fonts/DungeonFont.ttf");
-    commands.spawn((
-        TextBundle::from_section(
-            "Survivors".to_string(),
-            TextStyle {
-                font_size: 100.0,
-                color: Color::WHITE,
-                font: title_font,
+    commands.spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                top: Val::Px(-100.),
                 ..default()
             },
-        )
-        .with_text_justify(JustifyText::Center)
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(100.),
-            left: Val::Px(100.),
             ..default()
-        }),
-        UI_LAYER,
-        TitleText,
-    ));
+        }).with_children(|parent| {
+            parent.spawn((
+                TextBundle::from_section(
+                    "Survivors".to_string(),
+                    TextStyle {
+                        font_size: 100.0,
+                        color: Color::WHITE,
+                        font: title_font,
+                        ..default()
+                    },
+                )
+                .with_text_justify(JustifyText::Center),
+                UI_LAYER,
+                TitleText,
+            ));
+        });
 }
 
 fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
@@ -145,21 +146,19 @@ fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
 fn setup_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let font = asset_server.load("fonts/quaver.ttf");
-    let texture_handle = asset_server.load("9slice.png");
-    let texture_atlas = TextureAtlasLayout::from_grid(Vec2::new(16.0, 16.0), 3, 3, None, None);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let texture_handle: Handle<Image> = asset_server.load("buttons/9slice.png");
 
     let text_style = TextStyle {
+        color: Color::WHITE,
         font_size: 24.0,
         font,
         ..default()
     };
 
     let slicer = TextureSlicer {
-        border: BorderRect::square(22.0),
+        border: BorderRect::square(16.0),
         center_scale_mode: SliceScaleMode::Stretch,
         sides_scale_mode: SliceScaleMode::Stretch,
         max_corner_scale: 1.,
@@ -173,29 +172,70 @@ fn setup_menu(
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                row_gap: Val::Px(text_style.font_size * 2.),
                 ..default()
             },
             ..default()
         })
         .with_children(|parent| {
             parent.spawn((
-                AtlasImageBundle {
+                ButtonBundle {
                     style: Style {
-                        width: Val::Px(256.),
-                        height: Val::Px(256.),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        width: Val::Px(150.),
+                        height: Val::Px(50.),
                         ..default()
                     },
-                    texture_atlas: texture_atlas_handle.into(),
-                    image: UiImage::new(texture_handle),
+                    image: texture_handle.clone().into(),
                     ..default()
                 },
                 ImageScaleMode::Sliced(slicer.clone()),
-            ));
-            parent.spawn(TextBundle::from_section(
-                "Play".to_string(),
-                text_style.clone(),
-            ));
+            )).with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    "Play".to_string(),
+                    text_style.clone(),
+                ));
+            });
+
+            parent.spawn((
+                ButtonBundle {
+                    style: Style {
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        width: Val::Px(150.),
+                        height: Val::Px(50.),
+                        ..default()
+                    },
+                    image: texture_handle.clone().into(),
+                    ..default()
+                },
+                ImageScaleMode::Sliced(slicer.clone()),
+            )).with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    "Options".to_string(),
+                    text_style.clone(),
+                ));
+            });
+
+            parent.spawn((
+                ButtonBundle {
+                    style: Style {
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        width: Val::Px(150.),
+                        height: Val::Px(50.),
+                        ..default()
+                    },
+                    image: texture_handle.clone().into(),
+                    ..default()
+                },
+                ImageScaleMode::Sliced(slicer.clone()),
+            )).with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    "Quit".to_string(),
+                    text_style.clone(),
+                ));
+            });
         });
 }
 
