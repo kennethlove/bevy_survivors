@@ -1,3 +1,5 @@
+use bevy::render::view::RenderLayers;
+
 pub const DRAW_GIZMOS: bool = false;
 pub const UI_LAYER: RenderLayers = RenderLayers::layer(9);
 

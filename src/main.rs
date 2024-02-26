@@ -10,10 +10,8 @@ use bevy::{
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-        view::RenderLayers,
     },
     sprite::MaterialMesh2dBundle,
-    transform::commands,
     window::{CursorGrabMode, Window, WindowTheme},
 };
 use components::*;
@@ -144,8 +142,21 @@ fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
     }
 }
 
-fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let image = asset_server.load("buttons/Button_Blue_9Slides.png");
+fn setup_menu(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
+) {
+    let font = asset_server.load("fonts/quaver.ttf");
+    let texture_handle = asset_server.load("9slice.png");
+    let texture_atlas = TextureAtlasLayout::from_grid(Vec2::new(16.0, 16.0), 3, 3, None, None);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    let text_style = TextStyle {
+        font_size: 24.0,
+        font,
+        ..default()
+    };
 
     let slicer = TextureSlicer {
         border: BorderRect::square(22.0),
@@ -159,42 +170,32 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             style: Style {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
-                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                row_gap: Val::Px(text_style.font_size * 2.),
                 ..default()
             },
             ..default()
         })
         .with_children(|parent| {
-            parent
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            width: Val::Px(100.),
-                            height: Val::Px(25.),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::all(Val::Px(20.)),
-                            ..default()
-                        },
-                        image: image.clone().into(),
+            parent.spawn((
+                AtlasImageBundle {
+                    style: Style {
+                        width: Val::Px(256.),
+                        height: Val::Px(256.),
                         ..default()
                     },
-                    ImageScaleMode::Sliced(slicer.clone()),
-                ))
-                .with_children(|parent| {
-                    parent.spawn((
-                        TextBundle::from_section(
-                            "Play".to_string(),
-                            TextStyle {
-                                font_size: 20.,
-                                color: Color::DARK_GRAY,
-                                ..default()
-                            },
-                        ),
-                        UI_LAYER,
-                    ));
-                });
+                    texture_atlas: texture_atlas_handle.into(),
+                    image: UiImage::new(texture_handle),
+                    ..default()
+                },
+                ImageScaleMode::Sliced(slicer.clone()),
+            ));
+            parent.spawn(TextBundle::from_section(
+                "Play".to_string(),
+                text_style.clone(),
+            ));
         });
 }
 
