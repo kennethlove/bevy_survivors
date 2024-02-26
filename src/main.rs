@@ -170,17 +170,23 @@ fn setup_menu(
     };
 
     commands
-        .spawn(NodeBundle {
+        .spawn((NodeBundle {
             style: Style {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                margin: UiRect {
+                    left: Val::Px(0.),
+                    right: Val::Px(0.),
+                    top: Val::Px(20.),
+                    bottom: Val::Px(0.),
+                },
                 ..default()
             },
             ..default()
-        })
+        }, UI_LAYER))
         .with_children(|parent| {
             parent.spawn((
                 ButtonBundle {
