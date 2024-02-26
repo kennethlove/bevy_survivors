@@ -5,12 +5,22 @@ mod pawn;
 
 use bevy::{
     prelude::*,
+    render::{
+        camera::RenderTarget,
+        render_resource::{
+            Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
+        },
+        view::RenderLayers,
+    },
+    sprite::MaterialMesh2dBundle,
     window::{CursorGrabMode, Window, WindowTheme},
 };
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
 use pawn::PawnBundle;
+
+const UI_LAYER: RenderLayers = RenderLayers::layer(9);
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -54,7 +64,7 @@ fn main() {
         .add_systems(
             Update,
             (
-                grab_mouse,
+                // grab_mouse,
                 animate_sprites,
                 menu_button_system.run_if(in_state(AppState::Menu)),
                 draw_border,
@@ -144,13 +154,16 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ImageScaleMode::Sliced(slicer.clone()),
                 ))
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Play".to_string(),
-                        TextStyle {
-                            font_size: 40.,
-                            color: Color::DARK_GRAY,
-                            ..default()
-                        },
+                    parent.spawn((
+                        TextBundle::from_section(
+                            "Play".to_string(),
+                            TextStyle {
+                                font_size: 40.,
+                                color: Color::DARK_GRAY,
+                                ..default()
+                            },
+                        ),
+                        UI_LAYER,
                     ));
                 });
         });
@@ -165,7 +178,45 @@ fn cleanup_menu(
     }
 }
 
-fn setup_camera(mut commands: Commands) {
+fn setup_camera(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
+    let canvas_size = Extent3d {
+        width: WIDTH as u32,
+        height: HEIGHT as u32,
+        ..default()
+    };
+
+    // This Image serves as a canvas representing the UI layer
+    let mut canvas = Image {
+        texture_descriptor: TextureDescriptor {
+            label: None,
+            size: canvas_size,
+            dimension: TextureDimension::D2,
+            format: TextureFormat::Bgra8UnormSrgb,
+            mip_level_count: 1,
+            sample_count: 1,
+            usage: TextureUsages::TEXTURE_BINDING
+                | TextureUsages::COPY_DST
+                | TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        },
+        ..default()
+    };
+    canvas.resize(canvas_size);
+    let image_handle = images.add(canvas);
+
+    commands.spawn((
+        Camera2dBundle {
+            camera: Camera {
+                order: -1,
+                target: RenderTarget::Image(image_handle.clone()),
+                ..default()
+            },
+            ..default()
+        },
+        UICamera,
+        UI_LAYER,
+    ));
+
     commands.spawn((Camera2dBundle::default(), MainCamera));
 }
 

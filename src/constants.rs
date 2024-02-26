@@ -1,4 +1,4 @@
-pub const DRAW_GIZMOS: bool = true;
+pub const DRAW_GIZMOS: bool = false;
 
 pub const WIDTH: f32 = 600.;
 pub const HEIGHT: f32 = 400.;

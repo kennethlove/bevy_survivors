@@ -17,3 +17,9 @@ pub struct AnimationTimer(pub Timer);
 
 #[derive(Component)]
 pub struct MainCamera;
+
+#[derive(Component)]
+pub struct Canvas;
+
+#[derive(Component)]
+pub struct UICamera;
