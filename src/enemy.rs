@@ -1,6 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use crate::weapon::Weapon;
+use crate::ScoreEvent;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
 use bevy::prelude::*;
 
@@ -138,6 +139,7 @@ impl EnemyBundle {
         mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
         mut enemies: Query<(Entity, &mut Enemy, &Transform), Without<Pawn>>,
         time: Res<Time>,
+        mut events: EventWriter<ScoreEvent>,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_circle = BoundingCircle::new(
@@ -162,8 +164,10 @@ impl EnemyBundle {
                 let health = std::cmp::max(0, health as i32);
                 if health == 0 {
                     commands.get_entity(entity).unwrap().despawn();
+                    events.send(ScoreEvent::Scored(100));
                 } else {
                     enemy.health = health as u32;
+                    events.send(ScoreEvent::EnemyHit);
                 }
             }
         }

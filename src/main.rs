@@ -1,7 +1,9 @@
 mod components;
 mod constants;
 mod enemy;
+mod menu;
 mod pawn;
+mod ui;
 mod weapon;
 
 use bevy::{
@@ -17,7 +19,9 @@ use bevy::{
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
+use menu::*;
 use pawn::PawnBundle;
+use ui::*;
 use weapon::WeaponBundle;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
@@ -28,10 +32,24 @@ enum AppState {
     InGame,
 }
 
+#[derive(Resource)]
+struct Scoreboard {
+    score: u32,
+    kills: u32,
+}
+
+#[derive(Event)]
+pub enum ScoreEvent {
+    Scored(u32),
+    EnemyHit,
+}
+
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(Scoreboard { score: 0, kills: 0 })
         .init_state::<AppState>()
+        .add_event::<ScoreEvent>()
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
@@ -54,9 +72,14 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))
         .add_systems(OnExit(AppState::Menu), (cleanup_title, cleanup_menu))
+        .add_systems(OnExit(AppState::InGame), cleanup_ui)
         .add_systems(
             OnExit(AppState::Menu),
-            (PawnBundle::setup_sprite, WeaponBundle::setup_sprite),
+            (
+                PawnBundle::setup_sprite,
+                WeaponBundle::setup_sprite,
+                setup_ui,
+            ),
         )
         .add_systems(
             Update,
@@ -64,6 +87,10 @@ fn main() {
                 animate_sprites,
                 menu_button_system.run_if(in_state(AppState::Menu)),
                 draw_border,
+                PawnBundle::update_score,
+                update_ui
+                    .after(PawnBundle::update_score)
+                    .run_if(in_state(AppState::InGame)),
             ),
         )
         .add_systems(
@@ -79,37 +106,6 @@ fn main() {
         )
         .add_systems(Update, bevy::window::close_on_esc)
         .run();
-}
-
-fn menu_button_system(
-    mut state: ResMut<NextState<AppState>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut interaction_query: Query<(&Interaction, &Children), (Changed<Interaction>, With<Button>)>,
-    mut text_query: Query<&mut Text>,
-) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        state.set(AppState::InGame);
-    }
-
-    for (interaction, children) in &mut interaction_query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
-        match *interaction {
-            Interaction::Pressed => {
-                if text.sections[0].value == "Play" {
-                    state.set(AppState::InGame);
-                } else if text.sections[0].value == "Options" {
-                } else if text.sections[0].value == "Quit" {
-                    std::process::exit(0);
-                }
-            }
-            Interaction::Hovered => {
-                text.sections[0].style.font_size = 26.0;
-            }
-            Interaction::None => {
-                text.sections[0].style.font_size = 24.0;
-            }
-        }
-    }
 }
 
 fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -134,7 +130,6 @@ fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
                         font_size: 100.0,
                         color: Color::WHITE,
                         font: title_font,
-                        ..default()
                     },
                 )
                 .with_text_justify(JustifyText::Center),
@@ -147,126 +142,6 @@ fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
-    }
-}
-
-fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("fonts/quaver.ttf");
-    let texture_handle: Handle<Image> = asset_server.load("buttons/9slice.png");
-
-    let text_style = TextStyle {
-        color: Color::WHITE,
-        font_size: 24.0,
-        font,
-        ..default()
-    };
-
-    let slicer = TextureSlicer {
-        border: BorderRect::square(16.0),
-        center_scale_mode: SliceScaleMode::Stretch,
-        sides_scale_mode: SliceScaleMode::Stretch,
-        max_corner_scale: 1.,
-    };
-
-    commands
-        .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
-                    flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    margin: UiRect {
-                        left: Val::Px(0.),
-                        right: Val::Px(0.),
-                        top: Val::Px(20.),
-                        bottom: Val::Px(0.),
-                    },
-                    ..default()
-                },
-                ..default()
-            },
-            UI_LAYER,
-        ))
-        .with_children(|parent| {
-            parent
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            align_items: AlignItems::Center,
-                            justify_content: JustifyContent::Center,
-                            width: Val::Px(150.),
-                            height: Val::Px(50.),
-                            ..default()
-                        },
-                        image: texture_handle.clone().into(),
-                        ..default()
-                    },
-                    ImageScaleMode::Sliced(slicer.clone()),
-                    PlayButton,
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Play".to_string(),
-                        text_style.clone(),
-                    ));
-                });
-
-            parent
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            align_items: AlignItems::Center,
-                            justify_content: JustifyContent::Center,
-                            width: Val::Px(150.),
-                            height: Val::Px(50.),
-                            ..default()
-                        },
-                        image: texture_handle.clone().into(),
-                        ..default()
-                    },
-                    ImageScaleMode::Sliced(slicer.clone()),
-                    OptionsButton,
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Options".to_string(),
-                        text_style.clone(),
-                    ));
-                });
-
-            parent
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            align_items: AlignItems::Center,
-                            justify_content: JustifyContent::Center,
-                            width: Val::Px(150.),
-                            height: Val::Px(50.),
-                            ..default()
-                        },
-                        image: texture_handle.clone().into(),
-                        ..default()
-                    },
-                    ImageScaleMode::Sliced(slicer.clone()),
-                    QuitButton,
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Quit".to_string(),
-                        text_style.clone(),
-                    ));
-                });
-        });
-}
-
-fn cleanup_menu(
-    mut commands: Commands,
-    interaction_query: Query<(Entity, &Interaction, &mut UiImage), With<Button>>,
-) {
-    for entity in &mut interaction_query.iter() {
-        commands.entity(entity.0).despawn_recursive();
     }
 }
 

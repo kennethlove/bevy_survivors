@@ -1,4 +1,4 @@
-use crate::components::{AnimationIndices, AnimationTimer, Enemy};
+use crate::components::{AnimationIndices, AnimationTimer};
 use crate::constants::*;
 use bevy::prelude::*;
 

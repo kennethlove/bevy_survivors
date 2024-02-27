@@ -21,9 +21,6 @@ pub struct AnimationTimer(pub Timer);
 pub struct MainCamera;
 
 #[derive(Component)]
-pub struct Canvas;
-
-#[derive(Component)]
 pub struct UICamera;
 
 #[derive(Component)]
@@ -37,3 +34,9 @@ pub struct OptionsButton;
 
 #[derive(Component)]
 pub struct QuitButton;
+
+#[derive(Component)]
+pub struct Score;
+
+#[derive(Component)]
+pub struct Kills;

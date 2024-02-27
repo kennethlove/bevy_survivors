@@ -1,5 +1,6 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
+use crate::{ScoreEvent, Scoreboard};
 use bevy::input::keyboard::KeyCode;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
 use bevy::prelude::*;
@@ -150,6 +151,20 @@ impl PawnBundle {
                 if collision {
                     info!("Player attacked enemy!");
                     commands.entity(enemy_entity).despawn();
+                }
+            }
+        }
+    }
+
+    pub fn update_score(mut score: ResMut<Scoreboard>, mut events: EventReader<ScoreEvent>) {
+        for event in events.read() {
+            match event {
+                ScoreEvent::Scored(amount) => {
+                    score.score += amount;
+                    score.kills += 1;
+                }
+                ScoreEvent::EnemyHit => {
+                    score.score += 10;
                 }
             }
         }
