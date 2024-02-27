@@ -2,6 +2,7 @@ mod components;
 mod constants;
 mod enemy;
 mod pawn;
+mod weapon;
 
 use bevy::{
     prelude::*,
@@ -16,7 +17,8 @@ use bevy::{
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
-use pawn::{PawnBundle, Weapon, WeaponBundle};
+use pawn::PawnBundle;
+use weapon::WeaponBundle;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -52,7 +54,10 @@ fn main() {
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))
         .add_systems(OnExit(AppState::Menu), (cleanup_title, cleanup_menu))
-        .add_systems(OnExit(AppState::Menu), (PawnBundle::setup_sprite, WeaponBundle::setup_sprite))
+        .add_systems(
+            OnExit(AppState::Menu),
+            (PawnBundle::setup_sprite, WeaponBundle::setup_sprite),
+        )
         .add_systems(
             Update,
             (
@@ -110,7 +115,8 @@ fn menu_button_system(
 
 fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
     let title_font: Handle<Font> = asset_server.load("fonts/DungeonFont.ttf");
-    commands.spawn(NodeBundle {
+    commands
+        .spawn(NodeBundle {
             style: Style {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
@@ -120,7 +126,8 @@ fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             ..default()
-        }).with_children(|parent| {
+        })
+        .with_children(|parent| {
             parent.spawn((
                 TextBundle::from_section(
                     "Survivors".to_string(),
@@ -144,10 +151,7 @@ fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
     }
 }
 
-fn setup_menu(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/quaver.ttf");
     let texture_handle: Handle<Image> = asset_server.load("buttons/9slice.png");
 
@@ -166,86 +170,95 @@ fn setup_menu(
     };
 
     commands
-        .spawn((NodeBundle {
-            style: Style {
-                width: Val::Percent(100.),
-                height: Val::Percent(100.),
-                flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                margin: UiRect {
-                    left: Val::Px(0.),
-                    right: Val::Px(0.),
-                    top: Val::Px(20.),
-                    bottom: Val::Px(0.),
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    margin: UiRect {
+                        left: Val::Px(0.),
+                        right: Val::Px(0.),
+                        top: Val::Px(20.),
+                        bottom: Val::Px(0.),
+                    },
+                    ..default()
                 },
                 ..default()
             },
-            ..default()
-        }, UI_LAYER))
+            UI_LAYER,
+        ))
         .with_children(|parent| {
-            parent.spawn((
-                ButtonBundle {
-                    style: Style {
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        width: Val::Px(150.),
-                        height: Val::Px(50.),
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::Center,
+                            width: Val::Px(150.),
+                            height: Val::Px(50.),
+                            ..default()
+                        },
+                        image: texture_handle.clone().into(),
                         ..default()
                     },
-                    image: texture_handle.clone().into(),
-                    ..default()
-                },
-                ImageScaleMode::Sliced(slicer.clone()),
-                PlayButton,
-            )).with_children(|parent| {
-                parent.spawn(TextBundle::from_section(
-                    "Play".to_string(),
-                    text_style.clone(),
-                ));
-            });
+                    ImageScaleMode::Sliced(slicer.clone()),
+                    PlayButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Play".to_string(),
+                        text_style.clone(),
+                    ));
+                });
 
-            parent.spawn((
-                ButtonBundle {
-                    style: Style {
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        width: Val::Px(150.),
-                        height: Val::Px(50.),
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::Center,
+                            width: Val::Px(150.),
+                            height: Val::Px(50.),
+                            ..default()
+                        },
+                        image: texture_handle.clone().into(),
                         ..default()
                     },
-                    image: texture_handle.clone().into(),
-                    ..default()
-                },
-                ImageScaleMode::Sliced(slicer.clone()),
-                OptionsButton,
-            )).with_children(|parent| {
-                parent.spawn(TextBundle::from_section(
-                    "Options".to_string(),
-                    text_style.clone(),
-                ));
-            });
+                    ImageScaleMode::Sliced(slicer.clone()),
+                    OptionsButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Options".to_string(),
+                        text_style.clone(),
+                    ));
+                });
 
-            parent.spawn((
-                ButtonBundle {
-                    style: Style {
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        width: Val::Px(150.),
-                        height: Val::Px(50.),
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::Center,
+                            width: Val::Px(150.),
+                            height: Val::Px(50.),
+                            ..default()
+                        },
+                        image: texture_handle.clone().into(),
                         ..default()
                     },
-                    image: texture_handle.clone().into(),
-                    ..default()
-                },
-                ImageScaleMode::Sliced(slicer.clone()),
-                QuitButton,
-            )).with_children(|parent| {
-                parent.spawn(TextBundle::from_section(
-                    "Quit".to_string(),
-                    text_style.clone(),
-                ));
-            });
+                    ImageScaleMode::Sliced(slicer.clone()),
+                    QuitButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Quit".to_string(),
+                        text_style.clone(),
+                    ));
+                });
         });
 }
 

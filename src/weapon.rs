@@ -1,51 +1,57 @@
-use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
+use crate::components::{AnimationIndices, AnimationTimer, Enemy};
 use crate::constants::*;
-use bevy::input::keyboard::KeyCode;
-use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
+use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 
-const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
-const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 7 };
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
+#[derive(Component)]
+pub struct Weapon {
+    damage_amount: u32,
+    damage_frame: usize,
+}
+
 #[derive(Bundle)]
-pub struct PawnBundle {
+pub struct WeaponBundle {
     sprite: SpriteSheetBundle,
     animation_indices: AnimationIndices,
     animation_timer: AnimationTimer,
-    pawn: Pawn,
+    weapon: Weapon,
 }
 
-impl Default for PawnBundle {
+impl Default for WeaponBundle {
     fn default() -> Self {
-        PawnBundle {
+        WeaponBundle {
             sprite: SpriteSheetBundle {
                 transform: Transform::from_translation(STARTING_POSITION),
                 ..default()
             },
-            animation_indices: IDLE_ANIMATION,
+            animation_indices: AnimationIndices { first: 0, last: 0 },
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            pawn: Pawn,
+            weapon: Weapon {
+                damage_amount: 10,
+                damage_frame: 0,
+            },
         }
     }
 }
 
-impl PawnBundle {
+impl WeaponBundle {
     pub fn setup_sprite(
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
-        let texture = asset_server.load("16x32.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 32.), 8, 64, None, None);
+        let texture = asset_server.load("super/03.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(32., 32.), 6, 2, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
-        let animation_indices = IDLE_ANIMATION;
+        let animation_indices = AnimationIndices { first: 0, last: 11 };
 
         let mut transform = Transform::from_translation(STARTING_POSITION);
-        transform.translation.z = 2.;
-        transform.scale = Vec3::splat(2.);
+        transform.translation.z = -1.;
+        transform.scale = Vec3::splat(4.);
 
-        commands.spawn(PawnBundle {
+        commands.spawn(WeaponBundle {
             sprite: SpriteSheetBundle {
                 texture,
                 atlas: TextureAtlas {
@@ -64,18 +70,9 @@ impl PawnBundle {
     pub fn move_sprite(
         time: Res<Time>,
         keyboard_input: Res<ButtonInput<KeyCode>>,
-        mut query: Query<
-            (
-                &mut Transform,
-                &mut AnimationIndices,
-                &mut TextureAtlas,
-                &mut Sprite,
-            ),
-            With<Pawn>,
-        >,
+        mut query: Query<&mut Transform, With<Weapon>>,
     ) {
-        for (mut transform, mut animation_indices, mut atlas, mut sprite) in &mut query {
-            let mut new_animation_indices = IDLE_ANIMATION;
+        for mut transform in &mut query {
             let mut direction = Vec3::ZERO;
             if keyboard_input.pressed(KeyCode::KeyW) {
                 direction.y += 1.;
@@ -85,11 +82,9 @@ impl PawnBundle {
             }
             if keyboard_input.pressed(KeyCode::KeyA) {
                 direction.x -= 1.;
-                sprite.flip_x = true;
             }
             if keyboard_input.pressed(KeyCode::KeyD) {
                 direction.x += 1.;
-                sprite.flip_x = false;
             }
             if direction != Vec3::ZERO {
                 let mut speed = PAWN_SPEED;
@@ -106,50 +101,42 @@ impl PawnBundle {
                 new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
 
                 transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
-
-                new_animation_indices = RUN_ANIMATION;
-            }
-
-            animation_indices.first = new_animation_indices.first;
-            animation_indices.last = new_animation_indices.last;
-            if atlas.index > animation_indices.last || atlas.index < animation_indices.first {
-                atlas.index = animation_indices.first;
             }
         }
     }
 
-    pub fn collisions(
+    pub fn attack(
         mut commands: Commands,
-        mut player_query: Query<(&Transform, &Sprite), With<Pawn>>,
-        enemy_query: Query<(Entity, &Transform), With<Enemy>>,
-        keyboard_input: Res<ButtonInput<KeyCode>>,
-        mut gizmos: Gizmos,
+        mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
+        mut enemy_query: Query<(Entity, &mut Enemy, &Transform)>,
+        time: Res<Time>,
     ) {
-        let (player_transform, player_sprite) = player_query.single_mut();
+        let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
 
-        let mut sword_position = player_transform.translation.truncate() + Vec2::new(30., 0.);
-        if player_sprite.flip_x {
-            sword_position.x -= 115.;
-        }
-
-        let mut sword_pos = BoundingCircle::new(sword_position, 32.);
-        sword_pos.center += Vec2::new(28., 0.);
-        if DRAW_GIZMOS {
-            gizmos.circle_2d(sword_pos.center, 32., Color::YELLOW);
-        }
-
-        for (enemy_entity, enemy_transform) in &mut enemy_query.iter() {
+        for (entity, mut enemy, enemy_transform) in &mut enemy_query {
             let enemy_rect = Rect::from_center_size(
                 enemy_transform.translation.truncate(),
                 Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32),
             );
             let enemy_pos = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
 
-            if keyboard_input.pressed(KeyCode::Space) {
-                let collision = sword_pos.intersects(&enemy_pos);
-                if collision {
-                    info!("Player attacked enemy!");
-                    commands.entity(enemy_entity).despawn();
+            let weapon_rect = Rect::from_center_size(
+                weapon_transform.translation.truncate(),
+                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32)
+                    * weapon_transform.scale.truncate(),
+            );
+            let weapon_pos = Aabb2d::new(weapon_rect.center(), weapon_rect.size());
+
+            let collision = weapon_pos.intersects(&enemy_pos);
+            if collision
+                && weapon_timer.0.tick(time.delta()).just_finished()
+                && weapon_atlas.index == weapon.damage_frame
+            {
+                let health = enemy.health as i32 - weapon.damage_amount as i32;
+                if health <= 0 {
+                    commands.get_entity(entity).unwrap().despawn();
+                } else {
+                    enemy.health = health as u32;
                 }
             }
         }

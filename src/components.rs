@@ -4,7 +4,9 @@ use bevy::prelude::*;
 pub struct Pawn;
 
 #[derive(Component)]
-pub struct Enemy;
+pub struct Enemy {
+    pub health: u32,
+}
 
 #[derive(Clone, Component, Debug)]
 pub struct AnimationIndices {

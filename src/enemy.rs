@@ -26,7 +26,7 @@ impl Default for EnemyBundle {
             sprite: SpriteSheetBundle::default(),
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            pawn: Enemy,
+            pawn: Enemy { health: 100 },
         }
     }
 }
@@ -83,9 +83,9 @@ impl EnemyBundle {
                 Transform::from_translation(EnemyBundle::find_good_spot(enemies, player));
             transform = transform.with_scale(Vec3::splat(2.));
 
-            commands.spawn((
-                SpriteSheetBundle {
-                    texture: texture,
+            commands.spawn(EnemyBundle {
+                sprite: SpriteSheetBundle {
+                    texture,
                     transform, // Controls the placement of the sprite
                     atlas: TextureAtlas {
                         layout: texture_atlas_layout,
@@ -94,9 +94,9 @@ impl EnemyBundle {
                     ..default()
                 },
                 animation_indices,
-                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-                Enemy,
-            ));
+                animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+                pawn: Enemy { health: 100 },
+            });
         }
     }
 
@@ -134,7 +134,8 @@ impl EnemyBundle {
             new_animation_indices.first = RUN_ANIMATION.first;
             new_animation_indices.last = RUN_ANIMATION.last;
 
-            if player_pos.distance(transform.translation) < SPRITE_WIDTH as f32 {
+            if player_pos.distance(transform.translation) < SPRITE_WIDTH as f32 * transform.scale.x
+            {
                 info!("Enemy attacks player");
             }
 
