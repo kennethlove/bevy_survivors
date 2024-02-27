@@ -28,17 +28,10 @@ enum AppState {
     InGame,
 }
 
-#[derive(Event)]
-pub struct CollisionEvent {
-    pub entity: Entity,
-    pub amount: u32,
-}
-
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .init_state::<AppState>()
-        .add_event::<CollisionEvent>()
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
@@ -76,10 +69,9 @@ fn main() {
         .add_systems(
             FixedUpdate,
             ((
+                EnemyBundle::spawn_enemies,
                 PawnBundle::move_pawn,
                 WeaponBundle::move_weapon,
-                WeaponBundle::attack,
-                EnemyBundle::spawn_enemies,
                 EnemyBundle::move_enemies,
                 EnemyBundle::update_enemies,
             )

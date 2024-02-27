@@ -1,7 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
-use crate::CollisionEvent;
-use bevy::math::bounding::{Aabb2d, IntersectsVolume};
+use crate::weapon::Weapon;
+use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
 use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices {
@@ -34,7 +34,7 @@ impl Default for EnemyBundle {
 
 impl EnemyBundle {
     fn find_good_spot(
-        enemies: Query<&Transform, With<Enemy>>,
+        _enemies: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
     ) -> Vec3 {
         let player_pos = player.single().translation;
@@ -62,7 +62,7 @@ impl EnemyBundle {
         if Aabb2d::new(translation.truncate(), sprite_area)
             .intersects(&Aabb2d::new(player_pos.truncate(), sprite_area))
         {
-            return EnemyBundle::find_good_spot(enemies, player);
+            return EnemyBundle::find_good_spot(_enemies, player);
         }
         translation
     }
@@ -135,27 +135,36 @@ impl EnemyBundle {
 
     pub fn update_enemies(
         mut commands: Commands,
-        mut params: ParamSet<(
-            Query<&Transform, With<Pawn>>,
-            Query<(Entity, &mut Enemy, &Transform)>,
-        )>,
-        mut events: EventReader<CollisionEvent>,
+        mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
+        mut enemies: Query<(Entity, &mut Enemy, &Transform), Without<Pawn>>,
+        time: Res<Time>,
     ) {
-        let player_pos = params.p0().single().translation;
-        for (entity, mut enemy, transform) in &mut params.p1() {
-            for event in events.read() {
-                if event.entity == entity {
-                    enemy.health = std::cmp::max(0, enemy.health - event.amount);
+        let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
+        let weapon_circle = BoundingCircle::new(
+            weapon_transform.translation.truncate(),
+            weapon_transform.scale.x * SPRITE_WIDTH as f32,
+        );
 
-                    if enemy.health == 0 {
-                        info!("Enemy is dead");
-                        commands.get_entity(entity).unwrap().despawn()
-                    }
-                }
-            }
-            if player_pos.distance(transform.translation) < SPRITE_WIDTH as f32 * transform.scale.x
+        for (entity, mut enemy, &transform) in &mut enemies {
+            let enemy_rect = Rect::from_center_size(
+                transform.translation.truncate(),
+                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
+            );
+            let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
+            let collision =
+                weapon_circle.intersects(&enemy_aabb) && enemy_aabb.intersects(&weapon_circle);
+            if collision
+                && weapon_timer.0.tick(time.delta()).just_finished()
+                && weapon_atlas.index <= weapon.damage_frame_end
+                && weapon_atlas.index >= weapon.damage_frame_start
             {
-                info!("Player takes damage");
+                let health = enemy.health as f32 - weapon.damage_amount * weapon.damage_scale;
+                let health = std::cmp::max(0, health as i32);
+                if health == 0 {
+                    commands.get_entity(entity).unwrap().despawn();
+                } else {
+                    enemy.health = health as u32;
+                }
             }
         }
     }

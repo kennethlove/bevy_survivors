@@ -1,15 +1,22 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy};
 use crate::constants::*;
-use crate::CollisionEvent;
-use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
+const WEAPON_01: Weapon = Weapon {
+    damage_amount: 5.,
+    damage_frame_start: 0,
+    damage_frame_end: 4,
+    damage_scale: 1.,
+};
+
 #[derive(Component)]
 pub struct Weapon {
-    damage_amount: u32,
-    damage_frame: usize,
+    pub damage_amount: f32,
+    pub damage_frame_start: usize,
+    pub damage_frame_end: usize,
+    pub damage_scale: f32,
 }
 
 #[derive(Bundle)]
@@ -30,8 +37,10 @@ impl Default for WeaponBundle {
             animation_indices: AnimationIndices { first: 0, last: 0 },
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             weapon: Weapon {
-                damage_amount: 50,
-                damage_frame: 0,
+                damage_amount: 0.,
+                damage_frame_start: 0,
+                damage_frame_end: 0,
+                damage_scale: 1.,
             },
         }
     }
@@ -64,7 +73,7 @@ impl WeaponBundle {
             },
             animation_indices,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            ..default()
+            weapon: WEAPON_01,
         });
     }
 
@@ -102,42 +111,6 @@ impl WeaponBundle {
                 new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
 
                 transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
-            }
-        }
-    }
-
-    pub fn attack(
-        mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-        mut enemy_query: Query<(Entity, &Transform)>,
-        time: Res<Time>,
-        mut events: EventWriter<CollisionEvent>,
-    ) {
-        let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
-
-        for (entity, enemy_transform) in &mut enemy_query {
-            let enemy_rect = Rect::from_center_size(
-                enemy_transform.translation.truncate(),
-                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32)
-                    * enemy_transform.scale.truncate(),
-            );
-            let enemy_pos = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
-
-            let weapon_rect = Rect::from_center_size(
-                weapon_transform.translation.truncate(),
-                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32)
-                    * weapon_transform.scale.truncate(),
-            );
-            let weapon_pos = Aabb2d::new(weapon_rect.center(), weapon_rect.size());
-
-            let collision = weapon_pos.intersects(&enemy_pos);
-            if collision
-                && weapon_timer.0.tick(time.delta()).just_finished()
-                && weapon_atlas.index == weapon.damage_frame
-            {
-                events.send(CollisionEvent {
-                    entity,
-                    amount: weapon.damage_amount,
-                });
             }
         }
     }
