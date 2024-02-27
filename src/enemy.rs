@@ -1,5 +1,6 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
+use crate::CollisionEvent;
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 
@@ -100,7 +101,7 @@ impl EnemyBundle {
         }
     }
 
-    pub fn update_enemies(
+    pub fn move_enemies(
         mut params: ParamSet<(
             Query<&Transform, With<Pawn>>,
             Query<
@@ -113,17 +114,7 @@ impl EnemyBundle {
                 With<Enemy>,
             >,
         )>,
-        mut gizmos: Gizmos,
     ) {
-        if DRAW_GIZMOS {
-            for (transform, _, _, _) in &mut params.p1() {
-                let image_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
-                let scaled = image_size * transform.scale.truncate();
-                let bounding_box = Rect::from_center_size(transform.translation.truncate(), scaled);
-                gizmos.rect_2d(bounding_box.center(), 0., bounding_box.size(), Color::WHITE);
-            }
-        }
-
         let player_pos = params.p0().single().translation;
         for (mut transform, mut animation_indices, mut atlas, mut sprite) in &mut params.p1() {
             let mut direction = player_pos - transform.translation;
@@ -134,15 +125,37 @@ impl EnemyBundle {
             new_animation_indices.first = RUN_ANIMATION.first;
             new_animation_indices.last = RUN_ANIMATION.last;
 
-            if player_pos.distance(transform.translation) < SPRITE_WIDTH as f32 * transform.scale.x
-            {
-                info!("Enemy attacks player");
-            }
-
             animation_indices.first = new_animation_indices.first;
             animation_indices.last = new_animation_indices.last;
             if atlas.index > animation_indices.last || atlas.index < animation_indices.first {
                 atlas.index = animation_indices.first;
+            }
+        }
+    }
+
+    pub fn update_enemies(
+        mut commands: Commands,
+        mut params: ParamSet<(
+            Query<&Transform, With<Pawn>>,
+            Query<(Entity, &mut Enemy, &Transform)>,
+        )>,
+        mut events: EventReader<CollisionEvent>,
+    ) {
+        let player_pos = params.p0().single().translation;
+        for (entity, mut enemy, transform) in &mut params.p1() {
+            for event in events.read() {
+                if event.entity == entity {
+                    enemy.health = std::cmp::max(0, enemy.health - event.amount);
+
+                    if enemy.health == 0 {
+                        info!("Enemy is dead");
+                        commands.get_entity(entity).unwrap().despawn()
+                    }
+                }
+            }
+            if player_pos.distance(transform.translation) < SPRITE_WIDTH as f32 * transform.scale.x
+            {
+                info!("Player takes damage");
             }
         }
     }

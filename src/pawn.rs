@@ -61,7 +61,7 @@ impl PawnBundle {
         });
     }
 
-    pub fn move_sprite(
+    pub fn move_pawn(
         time: Res<Time>,
         keyboard_input: Res<ButtonInput<KeyCode>>,
         mut query: Query<

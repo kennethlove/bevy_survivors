@@ -1,5 +1,6 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy};
 use crate::constants::*;
+use crate::CollisionEvent;
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 
@@ -29,7 +30,7 @@ impl Default for WeaponBundle {
             animation_indices: AnimationIndices { first: 0, last: 0 },
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             weapon: Weapon {
-                damage_amount: 10,
+                damage_amount: 50,
                 damage_frame: 0,
             },
         }
@@ -67,7 +68,7 @@ impl WeaponBundle {
         });
     }
 
-    pub fn move_sprite(
+    pub fn move_weapon(
         time: Res<Time>,
         keyboard_input: Res<ButtonInput<KeyCode>>,
         mut query: Query<&mut Transform, With<Weapon>>,
@@ -106,17 +107,18 @@ impl WeaponBundle {
     }
 
     pub fn attack(
-        mut commands: Commands,
         mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-        mut enemy_query: Query<(Entity, &mut Enemy, &Transform)>,
+        mut enemy_query: Query<(Entity, &Transform)>,
         time: Res<Time>,
+        mut events: EventWriter<CollisionEvent>,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
 
-        for (entity, mut enemy, enemy_transform) in &mut enemy_query {
+        for (entity, enemy_transform) in &mut enemy_query {
             let enemy_rect = Rect::from_center_size(
                 enemy_transform.translation.truncate(),
-                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32),
+                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32)
+                    * enemy_transform.scale.truncate(),
             );
             let enemy_pos = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
 
@@ -132,12 +134,10 @@ impl WeaponBundle {
                 && weapon_timer.0.tick(time.delta()).just_finished()
                 && weapon_atlas.index == weapon.damage_frame
             {
-                let health = enemy.health as i32 - weapon.damage_amount as i32;
-                if health <= 0 {
-                    commands.get_entity(entity).unwrap().despawn();
-                } else {
-                    enemy.health = health as u32;
-                }
+                events.send(CollisionEvent {
+                    entity,
+                    amount: weapon.damage_amount,
+                });
             }
         }
     }
