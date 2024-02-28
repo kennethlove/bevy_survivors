@@ -6,6 +6,7 @@ pub struct Pawn;
 #[derive(Component)]
 pub struct Enemy {
     pub health: u32,
+    pub score: u32,
 }
 
 #[derive(Clone, Component, Debug)]

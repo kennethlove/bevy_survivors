@@ -36,20 +36,12 @@ fn menu_button_system(
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, score: Res<Scoreboard>) {
     let font = asset_server.load("fonts/quaver.ttf");
-    // let texture_handle: Handle<Image> = asset_server.load("buttons/9slice.png");
 
     let text_style = TextStyle {
         color: Color::WHITE,
         font_size: 12.0,
         font,
     };
-
-    // let slicer = TextureSlicer {
-    //     border: BorderRect::square(16.0),
-    //     center_scale_mode: SliceScaleMode::Stretch,
-    //     sides_scale_mode: SliceScaleMode::Stretch,
-    //     max_corner_scale: 1.,
-    // };
 
     commands
         .spawn((

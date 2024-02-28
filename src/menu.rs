@@ -3,6 +3,13 @@ use crate::constants::*;
 use crate::AppState;
 use bevy::prelude::*;
 
+#[derive(Event)]
+pub enum MenuEvent {
+    Play,
+    Options,
+    Quit,
+}
+
 pub fn menu_button_system(
     mut state: ResMut<NextState<AppState>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,

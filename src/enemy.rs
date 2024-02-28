@@ -28,7 +28,10 @@ impl Default for EnemyBundle {
             sprite: SpriteSheetBundle::default(),
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            pawn: Enemy { health: 100 },
+            pawn: Enemy {
+                health: 1,
+                score: 1,
+            },
         }
     }
 }
@@ -97,7 +100,10 @@ impl EnemyBundle {
                 },
                 animation_indices,
                 animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-                pawn: Enemy { health: 100 },
+                pawn: Enemy {
+                    health: 100,
+                    score: 200,
+                },
             });
         }
     }
@@ -164,7 +170,7 @@ impl EnemyBundle {
                 let health = std::cmp::max(0, health as i32);
                 if health == 0 {
                     commands.get_entity(entity).unwrap().despawn();
-                    events.send(ScoreEvent::Scored(100));
+                    events.send(ScoreEvent::Scored(enemy.score));
                 } else {
                     enemy.health = health as u32;
                     events.send(ScoreEvent::EnemyHit);

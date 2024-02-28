@@ -50,6 +50,7 @@ fn main() {
         .insert_resource(Scoreboard { score: 0, kills: 0 })
         .init_state::<AppState>()
         .add_event::<ScoreEvent>()
+        .add_event::<MenuEvent>()
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
