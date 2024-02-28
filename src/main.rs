@@ -78,7 +78,7 @@ fn main() {
             OnExit(AppState::Menu),
             (
                 PawnBundle::setup_sprite,
-                WeaponBundle::setup_sprite,
+                WeaponBundle::setup_sprite.after(PawnBundle::setup_sprite),
                 setup_ui,
             ),
         )

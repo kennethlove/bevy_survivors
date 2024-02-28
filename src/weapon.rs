@@ -58,7 +58,6 @@ impl WeaponBundle {
         let animation_indices = AnimationIndices { first: 0, last: 11 };
 
         let mut transform = Transform::from_translation(STARTING_POSITION);
-        transform.translation.z = -1.;
         transform.scale = Vec3::splat(4.);
 
         commands.spawn(WeaponBundle {

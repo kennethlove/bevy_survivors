@@ -43,7 +43,7 @@ impl PawnBundle {
         let animation_indices = IDLE_ANIMATION;
 
         let mut transform = Transform::from_translation(STARTING_POSITION);
-        transform.translation.z = 2.;
+        transform.translation.z = 9.;
         transform.scale = Vec3::splat(2.);
 
         commands.spawn(PawnBundle {
