@@ -3,7 +3,7 @@ use crate::constants::*;
 use crate::weapon::Weapon;
 use crate::ScoreEvent;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
-use bevy::prelude::*;
+use bevy::{asset, prelude::*};
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices {
     first: 112,
@@ -34,6 +34,14 @@ impl Default for EnemyBundle {
             },
         }
     }
+}
+
+#[derive(Component, Clone)]
+pub struct EnemySprite {
+    sprite: String,
+    layout: Handle<TextureAtlasLayout>,
+    idle: AnimationIndices,
+    run: AnimationIndices,
 }
 
 impl EnemyBundle {
@@ -78,14 +86,31 @@ impl EnemyBundle {
         enemies: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
     ) {
-        let texture: Handle<Image> = asset_server.load("16x32.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 32.), 8, 64, None, None);
-        let texture_atlas_layout = texture_atlas_layouts.add(layout);
-        let animation_indices = IDLE_ANIMATION;
+        let count = enemies.iter().count();
+        let good_spot = EnemyBundle::find_good_spot(enemies, player);
 
-        if enemies.iter().count() < 3 {
-            let mut transform =
-                Transform::from_translation(EnemyBundle::find_good_spot(enemies, player));
+        let green_kobold = EnemySprite {
+            sprite: "16x32.png".to_string(),
+            layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
+                Vec2::new(16., 32.),
+                8,
+                64,
+                None,
+                None,
+            )),
+            idle: IDLE_ANIMATION,
+            run: RUN_ANIMATION,
+        };
+
+        if count < 5 {
+            let enemy = green_kobold.clone();
+            let texture: Handle<Image> = asset_server.load(enemy.sprite);
+            let layout = enemy.layout;
+            let animation_indices = AnimationIndices {
+                first: enemy.idle.first,
+                last: enemy.idle.last,
+            };
+            let mut transform = Transform::from_translation(good_spot);
             transform = transform.with_scale(Vec3::splat(2.));
 
             commands.spawn(EnemyBundle {
@@ -93,7 +118,7 @@ impl EnemyBundle {
                     texture,
                     transform, // Controls the placement of the sprite
                     atlas: TextureAtlas {
-                        layout: texture_atlas_layout,
+                        layout,
                         index: animation_indices.first,
                     },
                     ..default()
@@ -101,8 +126,8 @@ impl EnemyBundle {
                 animation_indices,
                 animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
                 pawn: Enemy {
-                    health: 100,
-                    score: 200,
+                    health: 1000,
+                    score: 20000,
                 },
             });
         }
@@ -117,20 +142,24 @@ impl EnemyBundle {
                     &mut AnimationIndices,
                     &mut TextureAtlas,
                     &mut Sprite,
+                    &EnemySprite,
                 ),
                 With<Enemy>,
             >,
         )>,
     ) {
         let player_pos = params.p0().single().translation;
-        for (mut transform, mut animation_indices, mut atlas, mut sprite) in &mut params.p1() {
+        for (mut transform, mut animation_indices, mut atlas, mut sprite, sprite_details) in
+            &mut params.p1()
+        {
             let mut direction = player_pos - transform.translation;
             direction = direction.normalize();
             sprite.flip_x = direction.x < 0.;
             transform.translation += direction * ENEMY_SPEED;
-            let mut new_animation_indices = IDLE_ANIMATION.clone();
-            new_animation_indices.first = RUN_ANIMATION.first;
-            new_animation_indices.last = RUN_ANIMATION.last;
+            let new_animation_indices = AnimationIndices {
+                first: sprite_details.run.first,
+                last: sprite_details.run.last,
+            };
 
             animation_indices.first = new_animation_indices.first;
             animation_indices.last = new_animation_indices.last;
@@ -146,7 +175,10 @@ impl EnemyBundle {
         mut enemies: Query<(Entity, &mut Enemy, &Transform), Without<Pawn>>,
         time: Res<Time>,
         mut events: EventWriter<ScoreEvent>,
+        mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+        asset_server: ResMut<AssetServer>,
     ) {
+        let count = enemies.iter().count();
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_circle = BoundingCircle::new(
             weapon_transform.translation.truncate(),
@@ -176,6 +208,34 @@ impl EnemyBundle {
                     events.send(ScoreEvent::EnemyHit);
                 }
             }
+        }
+
+        if count < 2 {
+            let ogre = EnemySprite {
+                sprite: "48x48".to_string(),
+                layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
+                    Vec2::new(48., 48.),
+                    6,
+                    2,
+                    None,
+                    None,
+                )),
+                idle: AnimationIndices { first: 0, last: 1 },
+                run: AnimationIndices { first: 0, last: 11 },
+            };
+
+            commands.spawn(EnemyBundle {
+                sprite: SpriteSheetBundle {
+                    texture: asset_server.load(ogre.sprite),
+                    atlas: TextureAtlas {
+                        layout: ogre.layout,
+                        index: ogre.idle.first,
+                    },
+                    ..default()
+                },
+                animation_indices: ogre.run.clone(),
+                ..default()
+            });
         }
     }
 }

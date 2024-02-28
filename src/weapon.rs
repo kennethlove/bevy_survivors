@@ -6,16 +6,16 @@ const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
 const WEAPON_01: Weapon = Weapon {
     damage_amount: 5.,
-    damage_frame_start: 0,
     damage_frame_end: 4,
+    damage_frame_start: 0,
     damage_scale: 1.,
 };
 
 #[derive(Component)]
 pub struct Weapon {
     pub damage_amount: f32,
-    pub damage_frame_start: usize,
     pub damage_frame_end: usize,
+    pub damage_frame_start: usize,
     pub damage_scale: f32,
 }
 
