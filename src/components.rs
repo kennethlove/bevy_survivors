@@ -44,3 +44,6 @@ pub struct Score;
 
 #[derive(Component)]
 pub struct Kills;
+
+#[derive(Component)]
+pub struct PlayerHealth;

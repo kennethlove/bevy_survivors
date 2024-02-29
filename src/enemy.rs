@@ -20,6 +20,8 @@ pub struct EnemySprite {
     layout: Handle<TextureAtlasLayout>,
     idle: AnimationIndices,
     run: AnimationIndices,
+    pub height: f32,
+    pub width: f32,
 }
 
 #[derive(Bundle)]
@@ -46,6 +48,8 @@ impl Default for EnemyBundle {
                 layout: Handle::default(),
                 idle: IDLE_ANIMATION,
                 run: RUN_ANIMATION,
+                height: 16.,
+                width: 16.,
             },
         }
     }
@@ -107,10 +111,12 @@ impl EnemyBundle {
             )),
             idle: IDLE_ANIMATION,
             run: RUN_ANIMATION,
+            width: 16.,
+            height: 16.,
         };
 
         if count < 2 {
-            let enemy = green_kobold.clone();
+            let mut enemy = green_kobold.clone();
             let texture: Handle<Image> = asset_server.load(&enemy.sprite);
             let layout = enemy.layout.clone();
             let animation_indices = AnimationIndices {
@@ -150,18 +156,20 @@ impl EnemyBundle {
                 )),
                 idle: AnimationIndices { first: 0, last: 1 },
                 run: AnimationIndices { first: 0, last: 11 },
+                width: 48.,
+                height: 48.,
             };
 
             commands.spawn(EnemyBundle {
                 sprite: SpriteSheetBundle {
                     sprite: Sprite {
-                        custom_size: Some(Vec2::new(50., 50.)),
+                        custom_size: Some(Vec2::new(ogre.width, ogre.height)),
                         ..default()
                     },
                     texture: asset_server.load(ogre.sprite.clone()),
                     atlas: TextureAtlas {
                         layout: ogre.layout.clone(),
-                        index: ogre.idle.first,
+                        index: ogre.run.first,
                     },
                     ..default()
                 },

@@ -1,8 +1,10 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
+use crate::enemy::EnemySprite;
 use crate::{ScoreEvent, Scoreboard};
+use crate::weapon::Weapon;
 use bevy::input::keyboard::KeyCode;
-use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
+use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
@@ -63,7 +65,7 @@ impl PawnBundle {
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn {
                 speed: PAWN_SPEED,
-                health: 100,
+                health: 1000,
             },
             ..default()
         });
@@ -128,39 +130,49 @@ impl PawnBundle {
 
     pub fn collisions(
         mut commands: Commands,
-        mut player_query: Query<(&Transform, &Sprite), With<Pawn>>,
-        enemy_query: Query<(Entity, &Transform), With<Enemy>>,
-        keyboard_input: Res<ButtonInput<KeyCode>>,
+        mut player_query: Query<(&Transform, &mut Pawn), Without<Weapon>>,
+        enemy_query: Query<(&EnemySprite, &Transform), With<Enemy>>,
         mut gizmos: Gizmos,
     ) {
-        let (player_transform, player_sprite) = player_query.single_mut();
+        let (player_transform, mut player_pawn) = player_query.single_mut();
+        let mut translation = player_transform.translation.truncate();
+        translation.y -= SPRITE_HEIGHT as f32;
 
-        let mut sword_position = player_transform.translation.truncate() + Vec2::new(30., 0.);
-        if player_sprite.flip_x {
-            sword_position.x -= 115.;
-        }
+        let mut size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
+        size.x *= player_transform.scale.x;
+        size.y *= player_transform.scale.y;
 
-        let mut sword_pos = BoundingCircle::new(sword_position, 32.);
-        sword_pos.center += Vec2::new(28., 0.);
-        if DRAW_GIZMOS {
-            gizmos.circle_2d(sword_pos.center, 32., Color::YELLOW);
-        }
+        let player_bb = Aabb2d::new(
+            translation,
+            size
+        );
+        gizmos.rect_2d(
+            translation,
+            0.,
+            size,
+            Color::WHITE,
+        );
 
-        for (enemy_entity, enemy_transform) in &mut enemy_query.iter() {
-            let enemy_rect = Rect::from_center_size(
-                enemy_transform.translation.truncate(),
-                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32),
+        for (sprite, transform) in &mut enemy_query.iter() {
+            let mut translation = transform.translation.truncate();
+            // translation.y += sprite.height;
+
+            let mut size = Vec2::new(sprite.width, sprite.height);
+            size.x *= transform.scale.x;
+            size.y *= transform.scale.y;
+
+            let enemy_bb = Aabb2d::new(
+                translation,
+                size,
             );
-            let enemy_pos = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
+            gizmos.rect_2d(enemy_bb.center(), 0., size , Color::RED);
 
-            if keyboard_input.pressed(KeyCode::Space) {
-                let collision = sword_pos.intersects(&enemy_pos);
-                if collision {
-                    info!("Player attacked enemy!");
-                    commands.entity(enemy_entity).despawn();
-                }
+            if player_bb.intersects(&enemy_bb) {
+                let new_health = std::cmp::max(0, player_pawn.health - 1);
+                player_pawn.health = new_health;
             }
         }
+        ;
     }
 
     pub fn update_score(mut score: ResMut<Scoreboard>, mut events: EventReader<ScoreEvent>) {

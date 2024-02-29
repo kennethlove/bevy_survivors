@@ -104,11 +104,12 @@ fn main() {
         .add_systems(
             FixedUpdate,
             ((
+                PawnBundle::collisions,
                 PawnBundle::move_pawn,
                 WeaponBundle::move_weapon,
-                EnemyBundle::spawn_enemies,
                 EnemyBundle::move_enemies,
                 EnemyBundle::update_enemies,
+                EnemyBundle::spawn_enemies,
             )
                 .run_if(in_state(AppState::InGame)),),
         )
