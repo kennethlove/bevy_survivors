@@ -36,9 +36,6 @@ fn menu_button_system(
     }
 }
 
-#[derive(Component)]
-pub struct PlayerHealth;
-
 pub fn setup_hp(
     mut commands: Commands,
     asset_server: Res<AssetServer>,

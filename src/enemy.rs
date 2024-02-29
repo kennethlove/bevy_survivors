@@ -112,7 +112,7 @@ impl EnemyBundle {
             idle: IDLE_ANIMATION,
             run: RUN_ANIMATION,
             width: 16.,
-            height: 16.,
+            height: 32.,
         };
 
         if count < 2 {
