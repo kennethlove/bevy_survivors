@@ -6,15 +6,14 @@ mod pawn;
 mod ui;
 mod weapon;
 
+
 use bevy::{
-    prelude::*,
-    render::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*, render::{
         camera::RenderTarget,
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-    },
-    window::{Window, WindowTheme},
+    }, window::{Window, WindowTheme}
 };
 use components::*;
 use constants::*;
@@ -23,6 +22,7 @@ use menu::*;
 use pawn::PawnBundle;
 use ui::*;
 use weapon::WeaponBundle;
+
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -51,7 +51,7 @@ fn main() {
         .init_state::<AppState>()
         .add_event::<ScoreEvent>()
         .add_event::<MenuEvent>()
-        .add_plugins(
+        .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
@@ -69,7 +69,9 @@ fn main() {
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),
-        )
+                FrameTimeDiagnosticsPlugin,
+                LogDiagnosticsPlugin::default(),
+        ))
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))
         .add_systems(OnExit(AppState::Menu), (cleanup_title, cleanup_menu))

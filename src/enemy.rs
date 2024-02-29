@@ -1,9 +1,9 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
-use crate::constants::*;
+use crate::{constants::*, Scoreboard};
 use crate::weapon::Weapon;
 use crate::ScoreEvent;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
-use bevy::{asset, prelude::*};
+use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices {
     first: 112,
@@ -126,8 +126,8 @@ impl EnemyBundle {
                 animation_indices,
                 animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
                 pawn: Enemy {
-                    health: 1000,
-                    score: 20000,
+                    health: 100,
+                    score: 20,
                 },
             });
         }
@@ -177,8 +177,8 @@ impl EnemyBundle {
         mut events: EventWriter<ScoreEvent>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
         asset_server: ResMut<AssetServer>,
+        scoreboard: Res<Scoreboard>,
     ) {
-        let count = enemies.iter().count();
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_circle = BoundingCircle::new(
             weapon_transform.translation.truncate(),
@@ -210,9 +210,9 @@ impl EnemyBundle {
             }
         }
 
-        if count < 2 {
+        if scoreboard.kills > 3 {
             let ogre = EnemySprite {
-                sprite: "48x48".to_string(),
+                sprite: "48x48.png".to_string(),
                 layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
                     Vec2::new(48., 48.),
                     6,
@@ -226,6 +226,10 @@ impl EnemyBundle {
 
             commands.spawn(EnemyBundle {
                 sprite: SpriteSheetBundle {
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(48., 48.)),
+                        ..default()
+                    },
                     texture: asset_server.load(ogre.sprite),
                     atlas: TextureAtlas {
                         layout: ogre.layout,
@@ -234,6 +238,10 @@ impl EnemyBundle {
                     ..default()
                 },
                 animation_indices: ogre.run.clone(),
+                pawn: Enemy {
+                    health: 1000,
+                    score: 2000,
+                },
                 ..default()
             });
         }
