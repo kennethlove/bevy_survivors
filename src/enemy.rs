@@ -1,5 +1,5 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
-use crate::{constants::*, Scoreboard};
+use crate::constants::*;
 use crate::weapon::Weapon;
 use crate::ScoreEvent;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
@@ -14,12 +14,21 @@ const RUN_ANIMATION: AnimationIndices = AnimationIndices {
     last: 119,
 };
 
+#[derive(Component, Clone)]
+pub struct EnemySprite {
+    sprite: String,
+    layout: Handle<TextureAtlasLayout>,
+    idle: AnimationIndices,
+    run: AnimationIndices,
+}
+
 #[derive(Bundle)]
 pub struct EnemyBundle {
     pub sprite: SpriteSheetBundle,
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
     pub pawn: Enemy,
+    pub sprite_details: EnemySprite,
 }
 
 impl Default for EnemyBundle {
@@ -32,16 +41,14 @@ impl Default for EnemyBundle {
                 health: 1,
                 score: 1,
             },
+            sprite_details: EnemySprite {
+                sprite: "16x32.png".to_string(),
+                layout: Handle::default(),
+                idle: IDLE_ANIMATION,
+                run: RUN_ANIMATION,
+            },
         }
     }
-}
-
-#[derive(Component, Clone)]
-pub struct EnemySprite {
-    sprite: String,
-    layout: Handle<TextureAtlasLayout>,
-    idle: AnimationIndices,
-    run: AnimationIndices,
 }
 
 impl EnemyBundle {
@@ -102,10 +109,10 @@ impl EnemyBundle {
             run: RUN_ANIMATION,
         };
 
-        if count < 5 {
+        if count < 2 {
             let enemy = green_kobold.clone();
-            let texture: Handle<Image> = asset_server.load(enemy.sprite);
-            let layout = enemy.layout;
+            let texture: Handle<Image> = asset_server.load(&enemy.sprite);
+            let layout = enemy.layout.clone();
             let animation_indices = AnimationIndices {
                 first: enemy.idle.first,
                 last: enemy.idle.last,
@@ -124,11 +131,47 @@ impl EnemyBundle {
                     ..default()
                 },
                 animation_indices,
-                animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
                 pawn: Enemy {
                     health: 100,
                     score: 20,
                 },
+                sprite_details: enemy.clone(),
+                ..default()
+            });
+
+            let ogre = EnemySprite {
+                sprite: "48x48.png".to_string(),
+                layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
+                    Vec2::new(48., 48.),
+                    6,
+                    2,
+                    Some(Vec2::new(15., 15.)),
+                    None,
+                )),
+                idle: AnimationIndices { first: 0, last: 1 },
+                run: AnimationIndices { first: 0, last: 11 },
+            };
+
+            commands.spawn(EnemyBundle {
+                sprite: SpriteSheetBundle {
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(50., 50.)),
+                        ..default()
+                    },
+                    texture: asset_server.load(ogre.sprite.clone()),
+                    atlas: TextureAtlas {
+                        layout: ogre.layout.clone(),
+                        index: ogre.idle.first,
+                    },
+                    ..default()
+                },
+                animation_indices: ogre.run.clone(),
+                pawn: Enemy {
+                    health: 1000,
+                    score: 2000,
+                },
+                sprite_details: ogre.clone(),
+                ..default()
             });
         }
     }
@@ -149,6 +192,7 @@ impl EnemyBundle {
         )>,
     ) {
         let player_pos = params.p0().single().translation;
+        info!("{:?}", params.p1().iter().count());
         for (mut transform, mut animation_indices, mut atlas, mut sprite, sprite_details) in
             &mut params.p1()
         {
@@ -156,6 +200,7 @@ impl EnemyBundle {
             direction = direction.normalize();
             sprite.flip_x = direction.x < 0.;
             transform.translation += direction * ENEMY_SPEED;
+
             let new_animation_indices = AnimationIndices {
                 first: sprite_details.run.first,
                 last: sprite_details.run.last,
@@ -175,9 +220,6 @@ impl EnemyBundle {
         mut enemies: Query<(Entity, &mut Enemy, &Transform), Without<Pawn>>,
         time: Res<Time>,
         mut events: EventWriter<ScoreEvent>,
-        mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-        asset_server: ResMut<AssetServer>,
-        scoreboard: Res<Scoreboard>,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_circle = BoundingCircle::new(
@@ -208,42 +250,6 @@ impl EnemyBundle {
                     events.send(ScoreEvent::EnemyHit);
                 }
             }
-        }
-
-        if scoreboard.kills > 3 {
-            let ogre = EnemySprite {
-                sprite: "48x48.png".to_string(),
-                layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-                    Vec2::new(48., 48.),
-                    6,
-                    2,
-                    None,
-                    None,
-                )),
-                idle: AnimationIndices { first: 0, last: 1 },
-                run: AnimationIndices { first: 0, last: 11 },
-            };
-
-            commands.spawn(EnemyBundle {
-                sprite: SpriteSheetBundle {
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(48., 48.)),
-                        ..default()
-                    },
-                    texture: asset_server.load(ogre.sprite),
-                    atlas: TextureAtlas {
-                        layout: ogre.layout,
-                        index: ogre.idle.first,
-                    },
-                    ..default()
-                },
-                animation_indices: ogre.run.clone(),
-                pawn: Enemy {
-                    health: 1000,
-                    score: 2000,
-                },
-                ..default()
-            });
         }
     }
 }

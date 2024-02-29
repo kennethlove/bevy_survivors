@@ -6,14 +6,16 @@ mod pawn;
 mod ui;
 mod weapon;
 
-
 use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*, render::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    render::{
         camera::RenderTarget,
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-    }, window::{Window, WindowTheme}
+    },
+    window::{Window, WindowTheme},
 };
 use components::*;
 use constants::*;
@@ -22,7 +24,6 @@ use menu::*;
 use pawn::PawnBundle;
 use ui::*;
 use weapon::WeaponBundle;
-
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -69,8 +70,8 @@ fn main() {
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),
-                FrameTimeDiagnosticsPlugin,
-                LogDiagnosticsPlugin::default(),
+            FrameTimeDiagnosticsPlugin,
+            LogDiagnosticsPlugin::default(),
         ))
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))
@@ -99,9 +100,9 @@ fn main() {
         .add_systems(
             FixedUpdate,
             ((
-                EnemyBundle::spawn_enemies,
                 PawnBundle::move_pawn,
                 WeaponBundle::move_weapon,
+                EnemyBundle::spawn_enemies,
                 EnemyBundle::move_enemies,
                 EnemyBundle::update_enemies,
             )
