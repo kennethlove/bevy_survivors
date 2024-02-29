@@ -1,6 +1,8 @@
 use crate::components::*;
 use crate::constants::*;
+use crate::pawn;
 use crate::{AppState, Scoreboard};
+use bevy::asset;
 use bevy::prelude::*;
 
 fn menu_button_system(
@@ -31,6 +33,49 @@ fn menu_button_system(
                 text.sections[0].style.font_size = 24.0;
             }
         }
+    }
+}
+
+#[derive(Component)]
+pub struct PlayerHealth;
+
+pub fn setup_hp(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut player: Query<(&Transform, &Pawn)>,
+) {
+    let (location, pawn) = player.single_mut();
+    let mut location = location.clone();
+    location.translation.y += 20.;
+
+    let font = asset_server.load("fonts/quaver.ttf");
+
+    let text_style = TextStyle {
+        color: Color::WHITE,
+        font_size: 8.0,
+        font,
+    };
+
+    commands.spawn((
+        Text2dBundle {
+            text: Text::from_section(pawn.health.to_string(), text_style.clone()),
+            transform: location,
+            ..default()
+        },
+    PlayerHealth));
+}
+
+pub fn update_hp(
+    mut player: Query<(&Transform, &Pawn), Without<PlayerHealth>>,
+    mut hp: Query<(&mut Text, &mut Transform), With<PlayerHealth>>,
+) {
+    let (location, pawn) = player.single_mut();
+    let mut location = location.clone();
+    location.translation.y += 20.;
+
+    for (mut text, mut transform) in &mut hp {
+        transform.translation = location.translation;
+        text.sections[0].value = pawn.health.to_string();
     }
 }
 

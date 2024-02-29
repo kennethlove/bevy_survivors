@@ -192,7 +192,6 @@ impl EnemyBundle {
         )>,
     ) {
         let player_pos = params.p0().single().translation;
-        info!("{:?}", params.p1().iter().count());
         for (mut transform, mut animation_indices, mut atlas, mut sprite, sprite_details) in
             &mut params.p1()
         {

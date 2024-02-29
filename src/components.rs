@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 
 #[derive(Component)]
-pub struct Pawn;
+pub struct Pawn {
+    pub speed: f32,
+    pub health: u32,
+}
 
 #[derive(Component)]
 pub struct Enemy {

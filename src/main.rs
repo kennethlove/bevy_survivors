@@ -83,6 +83,7 @@ fn main() {
                 PawnBundle::setup_sprite,
                 WeaponBundle::setup_sprite.after(PawnBundle::setup_sprite),
                 setup_ui,
+                setup_hp.after(WeaponBundle::setup_sprite),
             ),
         )
         .add_systems(
@@ -93,6 +94,9 @@ fn main() {
                 draw_border,
                 PawnBundle::update_score,
                 update_ui
+                    .after(PawnBundle::update_score)
+                    .run_if(in_state(AppState::InGame)),
+                update_hp
                     .after(PawnBundle::update_score)
                     .run_if(in_state(AppState::InGame)),
             ),

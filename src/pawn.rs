@@ -26,7 +26,10 @@ impl Default for PawnBundle {
             },
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            pawn: Pawn,
+            pawn: Pawn {
+                speed: PAWN_SPEED,
+                health: 1,
+            },
         }
     }
 }
@@ -58,6 +61,10 @@ impl PawnBundle {
             },
             animation_indices,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            pawn: Pawn {
+                speed: PAWN_SPEED,
+                health: 100,
+            },
             ..default()
         });
     }
