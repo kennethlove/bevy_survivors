@@ -227,12 +227,14 @@ impl EnemyBundle {
         mut enemies: Query<(Entity, &mut Enemy, &Transform), Without<Pawn>>,
         time: Res<Time>,
         mut events: EventWriter<ScoreEvent>,
+        mut gizmos: Gizmos,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_circle = BoundingCircle::new(
             weapon_transform.translation.truncate(),
             weapon_transform.scale.x * SPRITE_WIDTH as f32,
         );
+        gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::YELLOW);
 
         for (entity, mut enemy, &transform) in &mut enemies {
             let enemy_rect = Rect::from_center_size(

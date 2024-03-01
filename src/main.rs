@@ -17,6 +17,7 @@ use bevy::{
     },
     window::{Window, WindowTheme},
 };
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
@@ -72,6 +73,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
+            WorldInspectorPlugin::new(),
         ))
         .add_systems(Startup, (setup_camera, setup_background))
         .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))

@@ -1,8 +1,8 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use crate::enemy::EnemySprite;
-use crate::{ScoreEvent, Scoreboard};
 use crate::weapon::Weapon;
+use crate::{ScoreEvent, Scoreboard};
 use bevy::input::keyboard::KeyCode;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
@@ -135,44 +135,29 @@ impl PawnBundle {
         mut gizmos: Gizmos,
     ) {
         let (player_transform, mut player_pawn) = player_query.single_mut();
-        let mut translation = player_transform.translation.truncate();
-        translation.y -= SPRITE_HEIGHT as f32;
+        let translation = player_transform.translation.truncate();
 
         let mut size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
-        size.x *= player_transform.scale.x;
-        size.y *= player_transform.scale.y;
+        size *= player_transform.scale.truncate();
 
-        let player_bb = Aabb2d::new(
-            translation,
-            size
-        );
-        gizmos.rect_2d(
-            translation,
-            0.,
-            size,
-            Color::WHITE,
-        );
+        let player_rect = Rect::from_center_size(translation, size);
+
+        let player_bb = Aabb2d::new(player_rect.center(), size);
+        gizmos.rect_2d(player_rect.center(), 0., size, Color::WHITE);
 
         for (sprite, transform) in &mut enemy_query.iter() {
-            let mut translation = transform.translation.truncate();
-            // translation.y += sprite.height;
-
+            let translation = transform.translation.truncate();
             let mut size = Vec2::new(sprite.width, sprite.height);
-            size.x *= transform.scale.x;
-            size.y *= transform.scale.y;
+            size *= transform.scale.truncate();
 
-            let enemy_bb = Aabb2d::new(
-                translation,
-                size,
-            );
-            gizmos.rect_2d(enemy_bb.center(), 0., size , Color::RED);
+            let enemy_bb = Aabb2d::new(translation, size);
+            gizmos.rect_2d(enemy_bb.center(), 0., size, Color::RED);
 
-            if player_bb.intersects(&enemy_bb) {
+            if enemy_bb.intersects(&player_bb) {
                 let new_health = std::cmp::max(0, player_pawn.health - 1);
                 player_pawn.health = new_health;
             }
         }
-        ;
     }
 
     pub fn update_score(mut score: ResMut<Scoreboard>, mut events: EventReader<ScoreEvent>) {
