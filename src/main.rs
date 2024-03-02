@@ -104,6 +104,7 @@ fn main() {
             Update,
             (
                 animate_sprites,
+                audio_system,
                 main_menu_button_system.run_if(in_state(AppState::MainMenu)),
                 draw_border,
                 PawnBundle::update_score,
@@ -265,15 +266,38 @@ fn pause(mut state: ResMut<NextState<AppState>>, keyboard_input: Res<ButtonInput
     }
 }
 
+fn audio_system(
+    state: Res<State<AppState>>,
+    asset_server: Res<AssetServer>,
+    mut sfx: Query<&AudioSink, With<SFX>>,
+    mut bg: Query<&AudioSink, With<BackgroundMusic>>,
+) {
+    match state.get() {
+        AppState::InGame => {
+            for sink in &mut bg.iter() {
+                sink.set_volume(0.5);
+            }
+            for sink in &mut sfx.iter() {
+                sink.play();
+            }
+        }
+        _ => {
+            for sink in &mut bg.iter() {
+                sink.set_volume(0.1);
+            }
+            for sink in &mut sfx.iter() {
+                sink.pause();
+            }
+        }
+    }
+}
+
 fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         AudioBundle {
-            source: asset_server.load("music/Arcade.m4a"),
-            ..default()
+            source: asset_server.load("music/Arcade.ogg"),
+            settings: PlaybackSettings::LOOP,
         },
         BackgroundMusic,
     ));
 }
-
-#[derive(Component)]
-struct BackgroundMusic;

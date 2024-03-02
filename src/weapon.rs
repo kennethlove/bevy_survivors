@@ -1,4 +1,4 @@
-use crate::components::{AnimationIndices, AnimationTimer};
+use crate::components::*;
 use crate::constants::*;
 use bevy::prelude::*;
 
@@ -58,6 +58,7 @@ impl WeaponBundle {
         let animation_indices = AnimationIndices { first: 0, last: 11 };
 
         let mut transform = Transform::from_translation(STARTING_POSITION);
+        transform.translation.z = 0.;
         transform.scale = Vec3::splat(4.);
 
         commands.spawn(WeaponBundle {
@@ -74,6 +75,13 @@ impl WeaponBundle {
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             weapon: WEAPON_01,
         });
+        commands.spawn((
+            AudioBundle {
+                source: asset_server.load("sfx/woosh2.ogg"),
+                settings: PlaybackSettings::LOOP,
+            },
+            SFX,
+        ));
     }
 
     pub fn move_weapon(
