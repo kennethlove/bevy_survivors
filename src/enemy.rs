@@ -1,4 +1,4 @@
-use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
+use crate::components::*;
 use crate::constants::*;
 use crate::weapon::Weapon;
 use crate::{ScoreEvent, Scoreboard};
@@ -127,15 +127,11 @@ impl EnemyBundle {
         let good_spot = EnemyBundle::find_good_spot(enemies, player);
 
         if count < 3 {
-            let enemy;
-            match scoreboard.kills {
-                0..=3 => {
-                    enemy = green_kobold.clone();
-                }
-                _ => {
-                    enemy = troll.clone();
-                }
-            }
+            let enemy = match scoreboard.kills {
+                0..=3 => green_kobold.clone(),
+                4..=6 => troll.clone(),
+                _ => green_kobold.clone(),
+            };
 
             let texture: Handle<Image> = asset_server.load(&enemy.sprite);
             let layout = enemy.layout.clone();
@@ -211,6 +207,7 @@ impl EnemyBundle {
         time: Res<Time>,
         mut events: EventWriter<ScoreEvent>,
         mut gizmos: Gizmos,
+        asset_server: Res<AssetServer>,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_circle = BoundingCircle::new(
@@ -234,6 +231,13 @@ impl EnemyBundle {
                 if health == 0 {
                     commands.get_entity(entity).unwrap().despawn();
                     events.send(ScoreEvent::Scored(enemy.score));
+                    commands.spawn((
+                        AudioBundle {
+                            source: asset_server.load("sfx/enemy_death.ogg"),
+                            ..default()
+                        },
+                        SFX,
+                    ));
                 } else {
                     enemy.health = health as u32;
                     events.send(ScoreEvent::EnemyHit);

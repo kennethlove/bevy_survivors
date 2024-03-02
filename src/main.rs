@@ -269,23 +269,23 @@ fn pause(mut state: ResMut<NextState<AppState>>, keyboard_input: Res<ButtonInput
 fn audio_system(
     state: Res<State<AppState>>,
     asset_server: Res<AssetServer>,
-    mut sfx: Query<&AudioSink, With<SFX>>,
-    mut bg: Query<&AudioSink, With<BackgroundMusic>>,
+    sfx: Query<&AudioSink, With<SFX>>,
+    bg: Query<&AudioSink, With<BackgroundMusic>>,
 ) {
     match state.get() {
         AppState::InGame => {
-            for sink in &mut bg.iter() {
+            for sink in &bg {
                 sink.set_volume(0.5);
             }
-            for sink in &mut sfx.iter() {
+            for sink in &sfx {
                 sink.play();
             }
         }
         _ => {
-            for sink in &mut bg.iter() {
+            for sink in &bg {
                 sink.set_volume(0.1);
             }
-            for sink in &mut sfx.iter() {
+            for sink in &sfx {
                 sink.pause();
             }
         }
