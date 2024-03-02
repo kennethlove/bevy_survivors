@@ -225,7 +225,11 @@ impl EnemyBundle {
             );
             let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
             let collision = weapon_circle.intersects(&enemy_aabb);
-            if collision {
+            if collision
+                && weapon_timer.0.tick(time.delta()).just_finished()
+                && weapon_atlas.index <= weapon.damage_frame_end
+                && weapon_atlas.index >= weapon.damage_frame_start
+            {
                 let health = enemy.health as f32 - weapon.damage_amount * weapon.damage_scale;
                 let health = std::cmp::max(0, health as i32);
                 if health == 0 {
