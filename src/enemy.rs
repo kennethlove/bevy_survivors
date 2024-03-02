@@ -217,7 +217,9 @@ impl EnemyBundle {
             weapon_transform.translation.truncate(),
             weapon_transform.scale.x * SPRITE_WIDTH as f32,
         );
-        gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::YELLOW);
+        if DRAW_GIZMOS {
+            gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::YELLOW);
+        }
 
         for (entity, mut enemy, &transform) in &mut enemies {
             let enemy_rect = Rect::from_center_size(
@@ -225,8 +227,7 @@ impl EnemyBundle {
                 Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
             );
             let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
-            let collision =
-                weapon_circle.intersects(&enemy_aabb) && enemy_aabb.intersects(&weapon_circle);
+            let collision = weapon_circle.intersects(&enemy_aabb);
             if collision {
                 let health = enemy.health as f32 - weapon.damage_amount * weapon.damage_scale;
                 let health = std::cmp::max(0, health as i32);

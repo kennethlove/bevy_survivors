@@ -138,19 +138,23 @@ impl PawnBundle {
         let size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
 
         let player_bb = Aabb2d::new(translation, size);
-        gizmos.rect_2d(
-            player_bb.center(),
-            0.,
-            player_bb.half_size() * 2.,
-            Color::WHITE,
-        );
+        if DRAW_GIZMOS {
+            gizmos.rect_2d(
+                player_bb.center(),
+                0.,
+                player_bb.half_size() * 2.,
+                Color::WHITE,
+            );
+        }
 
         for (sprite, transform) in &mut enemy_query.iter() {
             let translation = transform.translation.truncate();
             let size = Vec2::new(sprite.width, sprite.height);
 
             let enemy_bb = Aabb2d::new(translation, size);
-            gizmos.rect_2d(enemy_bb.center(), 0., enemy_bb.half_size() * 2., Color::RED);
+            if DRAW_GIZMOS {
+                gizmos.rect_2d(enemy_bb.center(), 0., enemy_bb.half_size() * 2., Color::RED);
+            }
 
             if enemy_bb.intersects(&player_bb) {
                 let new_health = std::cmp::max(0, player_pawn.health - 1);

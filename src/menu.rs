@@ -10,7 +10,7 @@ pub enum MenuEvent {
     Quit,
 }
 
-pub fn menu_button_system(
+pub fn main_menu_button_system(
     mut state: ResMut<NextState<AppState>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut interaction_query: Query<(&Interaction, &Children), (Changed<Interaction>, With<Button>)>,
@@ -41,7 +41,7 @@ pub fn menu_button_system(
     }
 }
 
-pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/quaver.ttf");
     let texture_handle: Handle<Image> = asset_server.load("buttons/9slice.png");
 
@@ -151,7 +151,7 @@ pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-pub fn cleanup_menu(
+pub fn cleanup_main_menu(
     mut commands: Commands,
     interaction_query: Query<(Entity, &Interaction, &mut UiImage), With<Button>>,
 ) {

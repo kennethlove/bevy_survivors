@@ -30,7 +30,8 @@ use weapon::WeaponBundle;
 enum AppState {
     #[default]
     Setup,
-    Menu,
+    MainMenu,
+    OptionMenu,
     InGame,
 }
 
@@ -75,12 +76,15 @@ fn main() {
             // LogDiagnosticsPlugin::default(),
             // WorldInspectorPlugin::new(),
         ))
-        .add_systems(Startup, (setup_camera, setup_background))
-        .add_systems(OnEnter(AppState::Menu), (setup_title, setup_menu))
-        .add_systems(OnExit(AppState::Menu), (cleanup_title, cleanup_menu))
+        .add_systems(Startup, (setup_camera, setup_background, setup_music))
+        .add_systems(OnEnter(AppState::MainMenu), (setup_title, setup_main_menu))
+        .add_systems(
+            OnExit(AppState::MainMenu),
+            (cleanup_title, cleanup_main_menu),
+        )
         .add_systems(OnExit(AppState::InGame), cleanup_ui)
         .add_systems(
-            OnExit(AppState::Menu),
+            OnEnter(AppState::InGame),
             (
                 PawnBundle::setup_sprite,
                 WeaponBundle::setup_sprite.after(PawnBundle::setup_sprite),
@@ -100,7 +104,7 @@ fn main() {
             Update,
             (
                 animate_sprites,
-                menu_button_system.run_if(in_state(AppState::Menu)),
+                main_menu_button_system.run_if(in_state(AppState::MainMenu)),
                 draw_border,
                 PawnBundle::update_score,
                 update_ui
@@ -236,7 +240,7 @@ fn setup_background(
         },
     ));
 
-    next_state.set(AppState::Menu);
+    next_state.set(AppState::MainMenu);
 }
 
 fn animate_sprites(
@@ -257,6 +261,19 @@ fn animate_sprites(
 
 fn pause(mut state: ResMut<NextState<AppState>>, keyboard_input: Res<ButtonInput<KeyCode>>) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
-        state.set(AppState::Menu);
+        state.set(AppState::MainMenu);
     }
 }
+
+fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("music/Arcade.m4a"),
+            ..default()
+        },
+        BackgroundMusic,
+    ));
+}
+
+#[derive(Component)]
+struct BackgroundMusic;
