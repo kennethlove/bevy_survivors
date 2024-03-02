@@ -42,8 +42,8 @@ impl PawnBundle {
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
-        let texture = asset_server.load("16x32.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 32.), 8, 64, None, None);
+        let texture = asset_server.load("purple_knight.png");
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 24.), 8, 1, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
@@ -67,7 +67,6 @@ impl PawnBundle {
                 speed: PAWN_SPEED,
                 health: 1000,
             },
-            ..default()
         });
     }
 
@@ -136,22 +135,22 @@ impl PawnBundle {
     ) {
         let (player_transform, mut player_pawn) = player_query.single_mut();
         let translation = player_transform.translation.truncate();
+        let size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
 
-        let mut size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
-        size *= player_transform.scale.truncate();
-
-        let player_rect = Rect::from_center_size(translation, size);
-
-        let player_bb = Aabb2d::new(player_rect.center(), size);
-        gizmos.rect_2d(player_rect.center(), 0., size, Color::WHITE);
+        let player_bb = Aabb2d::new(translation, size);
+        gizmos.rect_2d(
+            player_bb.center(),
+            0.,
+            player_bb.half_size() * 2.,
+            Color::WHITE,
+        );
 
         for (sprite, transform) in &mut enemy_query.iter() {
             let translation = transform.translation.truncate();
-            let mut size = Vec2::new(sprite.width, sprite.height);
-            size *= transform.scale.truncate();
+            let size = Vec2::new(sprite.width, sprite.height);
 
             let enemy_bb = Aabb2d::new(translation, size);
-            gizmos.rect_2d(enemy_bb.center(), 0., size, Color::RED);
+            gizmos.rect_2d(enemy_bb.center(), 0., enemy_bb.half_size() * 2., Color::RED);
 
             if enemy_bb.intersects(&player_bb) {
                 let new_health = std::cmp::max(0, player_pawn.health - 1);

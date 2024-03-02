@@ -1,18 +1,12 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use crate::weapon::Weapon;
-use crate::ScoreEvent;
+use crate::{ScoreEvent, Scoreboard};
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
 use bevy::prelude::*;
 
-const IDLE_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 112,
-    last: 113,
-};
-const RUN_ANIMATION: AnimationIndices = AnimationIndices {
-    first: 112,
-    last: 119,
-};
+const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
+const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 7 };
 
 #[derive(Component, Clone)]
 pub struct EnemySprite {
@@ -96,27 +90,53 @@ impl EnemyBundle {
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
         enemies: Query<&Transform, With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
+        scoreboard: Res<Scoreboard>,
     ) {
         let count = enemies.iter().count();
-        let good_spot = EnemyBundle::find_good_spot(enemies, player);
 
         let green_kobold = EnemySprite {
-            sprite: "16x32.png".to_string(),
+            sprite: "green_kobold.png".to_string(),
             layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-                Vec2::new(16., 32.),
+                Vec2::new(16., 24.),
                 8,
-                64,
+                1,
                 None,
                 None,
             )),
             idle: IDLE_ANIMATION,
             run: RUN_ANIMATION,
             width: 16.,
-            height: 32.,
+            height: 24.,
         };
 
-        if count < 2 {
-            let mut enemy = green_kobold.clone();
+        let troll = EnemySprite {
+            sprite: "troll.png".to_string(),
+            layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
+                Vec2::new(48., 38.),
+                12,
+                1,
+                Some(Vec2::new(16., 0.)),
+                None,
+            )),
+            idle: AnimationIndices { first: 0, last: 1 },
+            run: AnimationIndices { first: 0, last: 11 },
+            width: 48.,
+            height: 38.,
+        };
+
+        let good_spot = EnemyBundle::find_good_spot(enemies, player);
+
+        if count < 3 {
+            let enemy;
+            match scoreboard.kills {
+                0..=3 => {
+                    enemy = green_kobold.clone();
+                }
+                _ => {
+                    enemy = troll.clone();
+                }
+            }
+
             let texture: Handle<Image> = asset_server.load(&enemy.sprite);
             let layout = enemy.layout.clone();
             let animation_indices = AnimationIndices {
@@ -138,47 +158,10 @@ impl EnemyBundle {
                 },
                 animation_indices,
                 pawn: Enemy {
-                    health: 100,
-                    score: 20,
+                    health: 100 * scoreboard.kills + 1,
+                    score: 20 * scoreboard.kills + 1,
                 },
                 sprite_details: enemy.clone(),
-                ..default()
-            });
-
-            let ogre = EnemySprite {
-                sprite: "48x48.png".to_string(),
-                layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-                    Vec2::new(48., 48.),
-                    6,
-                    2,
-                    Some(Vec2::new(15., 15.)),
-                    None,
-                )),
-                idle: AnimationIndices { first: 0, last: 1 },
-                run: AnimationIndices { first: 0, last: 11 },
-                width: 48.,
-                height: 48.,
-            };
-
-            commands.spawn(EnemyBundle {
-                sprite: SpriteSheetBundle {
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(ogre.width, ogre.height)),
-                        ..default()
-                    },
-                    texture: asset_server.load(ogre.sprite.clone()),
-                    atlas: TextureAtlas {
-                        layout: ogre.layout.clone(),
-                        index: ogre.run.first,
-                    },
-                    ..default()
-                },
-                animation_indices: ogre.run.clone(),
-                pawn: Enemy {
-                    health: 1000,
-                    score: 2000,
-                },
-                sprite_details: ogre.clone(),
                 ..default()
             });
         }
@@ -244,11 +227,7 @@ impl EnemyBundle {
             let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
             let collision =
                 weapon_circle.intersects(&enemy_aabb) && enemy_aabb.intersects(&weapon_circle);
-            if collision
-                && weapon_timer.0.tick(time.delta()).just_finished()
-                && weapon_atlas.index <= weapon.damage_frame_end
-                && weapon_atlas.index >= weapon.damage_frame_start
-            {
+            if collision {
                 let health = enemy.health as f32 - weapon.damage_amount * weapon.damage_scale;
                 let health = std::cmp::max(0, health as i32);
                 if health == 0 {
