@@ -89,6 +89,14 @@ fn main() {
             ),
         )
         .add_systems(
+            OnExit(AppState::InGame),
+            (
+                PawnBundle::cleanup_sprite,
+                WeaponBundle::cleanup_sprite.after(PawnBundle::cleanup_sprite),
+                cleanup_hp,
+            ),
+        )
+        .add_systems(
             Update,
             (
                 animate_sprites,
@@ -101,6 +109,7 @@ fn main() {
                 update_hp
                     .after(PawnBundle::update_score)
                     .run_if(in_state(AppState::InGame)),
+                pause.run_if(in_state(AppState::InGame)),
             ),
         )
         .add_systems(
@@ -115,7 +124,7 @@ fn main() {
             )
                 .run_if(in_state(AppState::InGame)),),
         )
-        .add_systems(Update, bevy::window::close_on_esc)
+        // .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
 
@@ -243,5 +252,11 @@ fn animate_sprites(
                 atlas.index + 1
             };
         }
+    }
+}
+
+fn pause(mut state: ResMut<NextState<AppState>>, keyboard_input: Res<ButtonInput<KeyCode>>) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        state.set(AppState::Menu);
     }
 }

@@ -113,4 +113,10 @@ impl WeaponBundle {
             }
         }
     }
+
+    pub fn cleanup_sprite(mut commands: Commands, mut query: Query<Entity, With<Weapon>>) {
+        for entity in &mut query {
+            commands.entity(entity).despawn();
+        }
+    }
 }

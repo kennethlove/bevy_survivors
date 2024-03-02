@@ -59,7 +59,8 @@ pub fn setup_hp(
             transform: location,
             ..default()
         },
-    PlayerHealth));
+        PlayerHealth,
+    ));
 }
 
 pub fn update_hp(
@@ -73,6 +74,12 @@ pub fn update_hp(
     for (mut text, mut transform) in &mut hp {
         transform.translation = location.translation;
         text.sections[0].value = pawn.health.to_string();
+    }
+}
+
+pub fn cleanup_hp(mut commands: Commands, query: Query<Entity, With<PlayerHealth>>) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
     }
 }
 
