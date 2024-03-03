@@ -7,6 +7,7 @@ mod ui;
 mod weapon;
 
 use bevy::{
+    asset::AssetMetaCheck,
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
     render::{
@@ -17,7 +18,6 @@ use bevy::{
     },
     window::{Window, WindowTheme},
 };
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
@@ -49,6 +49,7 @@ pub enum ScoreEvent {
 
 fn main() {
     App::new()
+        .insert_resource(AssetMetaCheck::Never)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Scoreboard { score: 0, kills: 0 })
         .init_state::<AppState>()
@@ -74,7 +75,6 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             // FrameTimeDiagnosticsPlugin,
             // LogDiagnosticsPlugin::default(),
-            // WorldInspectorPlugin::new(),
         ))
         .add_systems(Startup, (setup_camera, setup_background, setup_music))
         .add_systems(OnEnter(AppState::MainMenu), (setup_title, setup_main_menu))
@@ -89,7 +89,7 @@ fn main() {
                 PawnBundle::setup_sprite,
                 WeaponBundle::setup_sprite.after(PawnBundle::setup_sprite),
                 setup_ui,
-                setup_hp.after(WeaponBundle::setup_sprite),
+                setup_hp.after(PawnBundle::setup_sprite),
             ),
         )
         .add_systems(

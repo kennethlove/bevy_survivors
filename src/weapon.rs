@@ -61,27 +61,30 @@ impl WeaponBundle {
         transform.translation.z = 0.;
         transform.scale = Vec3::splat(4.);
 
-        commands.spawn(WeaponBundle {
-            sprite: SpriteSheetBundle {
-                texture,
-                atlas: TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: animation_indices.first,
+        commands
+            .spawn(WeaponBundle {
+                sprite: SpriteSheetBundle {
+                    texture,
+                    atlas: TextureAtlas {
+                        layout: texture_atlas_layout,
+                        index: animation_indices.first,
+                    },
+                    transform,
+                    ..default()
                 },
-                transform,
-                ..default()
-            },
-            animation_indices,
-            animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            weapon: WEAPON_01,
-        });
-        commands.spawn((
-            AudioBundle {
-                source: asset_server.load("sfx/woosh2.ogg"),
-                settings: PlaybackSettings::LOOP,
-            },
-            SFX,
-        ));
+                animation_indices,
+                animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+                weapon: WEAPON_01,
+            })
+            .with_children(|parent| {
+                parent.spawn((
+                    AudioBundle {
+                        source: asset_server.load("sfx/woosh2.ogg"),
+                        settings: PlaybackSettings::LOOP,
+                    },
+                    SFX,
+                ));
+            });
     }
 
     pub fn move_weapon(

@@ -1,7 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use crate::enemy::EnemySprite;
-use crate::weapon::Weapon;
+use crate::weapon::{Weapon, WeaponBundle};
 use crate::{ScoreEvent, Scoreboard};
 use bevy::input::keyboard::KeyCode;
 use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
