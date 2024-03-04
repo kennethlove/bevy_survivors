@@ -8,6 +8,7 @@ version = "0.1.0"
 [dependencies]
 bevy = "0.13"
 bevy_ecs_tilemap = "0.12.0"
+bevy_ghx_proc_gen = "0.1.0"
 fastrand = "2.0.1"
 
 [profile.dev]
