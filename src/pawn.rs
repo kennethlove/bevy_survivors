@@ -66,7 +66,7 @@ impl PawnBundle {
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn {
                 speed: PAWN_SPEED,
-                health: 10,
+                health: 100,
             },
         });
     }
