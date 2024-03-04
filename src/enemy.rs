@@ -95,7 +95,7 @@ impl EnemyBundle {
         let count = enemies.iter().count();
 
         let green_kobold = EnemySprite {
-            sprite: "green_kobold.png".to_string(),
+            sprite: "enemies/green_kobold.png".to_string(),
             layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
                 Vec2::new(16., 24.),
                 8,
@@ -110,7 +110,7 @@ impl EnemyBundle {
         };
 
         let troll = EnemySprite {
-            sprite: "troll.png".to_string(),
+            sprite: "enemies/troll.png".to_string(),
             layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
                 Vec2::new(48., 38.),
                 12,

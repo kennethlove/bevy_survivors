@@ -1,10 +1,11 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
 use crate::constants::*;
 use crate::enemy::EnemySprite;
-use crate::weapon::{Weapon, WeaponBundle};
+use crate::weapon::Weapon;
+use crate::AppState;
 use crate::{ScoreEvent, Scoreboard};
 use bevy::input::keyboard::KeyCode;
-use bevy::math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume};
+use bevy::math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
@@ -42,7 +43,7 @@ impl PawnBundle {
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
-        let texture = asset_server.load("purple_knight.png");
+        let texture = asset_server.load("pawns/purple_knight.png");
         let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 24.), 8, 1, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
@@ -65,7 +66,7 @@ impl PawnBundle {
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn {
                 speed: PAWN_SPEED,
-                health: 1000,
+                health: 10,
             },
         });
     }
@@ -128,10 +129,10 @@ impl PawnBundle {
     }
 
     pub fn collisions(
-        mut commands: Commands,
         mut player_query: Query<(&Transform, &mut Pawn), Without<Weapon>>,
         enemy_query: Query<(&EnemySprite, &Transform), With<Enemy>>,
         mut gizmos: Gizmos,
+        mut state: ResMut<NextState<AppState>>,
     ) {
         let (player_transform, mut player_pawn) = player_query.single_mut();
         let translation = player_transform.translation.truncate();
@@ -157,8 +158,13 @@ impl PawnBundle {
             }
 
             if enemy_bb.intersects(&player_bb) {
-                let new_health = std::cmp::max(0, player_pawn.health - 1);
-                player_pawn.health = new_health;
+                let new_health = std::cmp::max(0, player_pawn.health as i32 - 1);
+
+                if new_health == 0 {
+                    state.set(AppState::GameOver);
+                }
+
+                player_pawn.health = new_health as u32;
             }
         }
     }
