@@ -2,6 +2,8 @@ use crate::components::*;
 use crate::constants::*;
 use crate::AppState;
 use bevy::prelude::*;
+use bevy_pkv::PkvStore;
+use crate::HighScore;
 
 #[derive(Event)]
 pub enum MenuEvent {
@@ -160,8 +162,10 @@ pub fn cleanup_main_menu(
     }
 }
 
-pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>, pkv: Res<PkvStore>) {
     let title_font: Handle<Font> = asset_server.load("fonts/DungeonFont.ttf");
+    let high_score: HighScore = pkv.get::<HighScore>("high_score").unwrap();
+
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -181,12 +185,25 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
                     TextStyle {
                         font_size: 100.0,
                         color: Color::RED,
-                        font: title_font,
+                        font: title_font.clone(),
                     },
                 )
                 .with_text_justify(JustifyText::Center),
                 UI_LAYER,
                 TitleText,
+            ));
+
+            parent.spawn((
+                TextBundle::from_section(
+                    format!("High Score: {:?}", high_score),
+                    TextStyle {
+                        font_size: 50.0,
+                        color: Color::WHITE,
+                        font: title_font.clone(),
+                    },
+                )
+                .with_text_justify(JustifyText::Center),
+                UI_LAYER,
             ));
         });
 

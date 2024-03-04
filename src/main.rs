@@ -25,6 +25,8 @@ use menu::*;
 use pawn::PawnBundle;
 use ui::*;
 use weapon::WeaponBundle;
+use bevy_pkv::PkvStore;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -42,6 +44,12 @@ struct Scoreboard {
     kills: u32,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct HighScore {
+    score: u32,
+    kills: u32,
+}
+
 #[derive(Event)]
 pub enum ScoreEvent {
     Scored(u32),
@@ -53,6 +61,7 @@ fn main() {
         .insert_resource(AssetMetaCheck::Never)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Scoreboard { score: 0, kills: 0 })
+        .insert_resource(PkvStore::new("kennethlove", "Survivors"))
         .init_state::<AppState>()
         .add_event::<ScoreEvent>()
         .add_event::<MenuEvent>()
@@ -101,8 +110,8 @@ fn main() {
                 cleanup_hp,
             ),
         )
-        .add_systems(OnEnter(AppState::GameOver), setup_game_over)
-        .add_systems(OnExit(AppState::GameOver), (cleanup_game_over, reset))
+        .add_systems(OnEnter(AppState::GameOver), (reset, setup_game_over.after(reset)))
+        .add_systems(OnExit(AppState::GameOver), cleanup_game_over)
         .add_systems(
             Update,
             (
@@ -307,7 +316,20 @@ fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn reset(
     mut scoreboard: ResMut<Scoreboard>,
+    mut pkv: ResMut<PkvStore>,
 ) {
+    let new_score = HighScore { score: scoreboard.score, kills: scoreboard.kills };
+    if let Ok(high_score) = pkv.get::<HighScore>("high_score") {
+        if new_score.score > high_score.score {
+            pkv.set("high_score", &new_score).map_err(|e| {
+                println!("Error saving high score: {}", e);
+            }).ok();
+        }
+    } else {
+        pkv.set("high_score", &new_score).map_err(|e| {
+            println!("Error saving high score: {}", e);
+        }).ok();
+    }
     scoreboard.score = 0;
     scoreboard.kills = 0;
 }
