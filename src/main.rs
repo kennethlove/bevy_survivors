@@ -107,11 +107,12 @@ fn main() {
             (
                 PawnBundle::cleanup_sprite,
                 WeaponBundle::cleanup_sprite.after(PawnBundle::cleanup_sprite),
+                EnemyBundle::cleanup_sprites,
                 cleanup_hp,
             ),
         )
-        .add_systems(OnEnter(AppState::GameOver), (reset, setup_game_over.after(reset)))
-        .add_systems(OnExit(AppState::GameOver), cleanup_game_over)
+        .add_systems(OnEnter(AppState::GameOver), setup_game_over)
+        .add_systems(OnExit(AppState::GameOver), (cleanup_game_over, reset))
         .add_systems(
             Update,
             (
@@ -316,20 +317,7 @@ fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn reset(
     mut scoreboard: ResMut<Scoreboard>,
-    mut pkv: ResMut<PkvStore>,
 ) {
-    let new_score = HighScore { score: scoreboard.score, kills: scoreboard.kills };
-    if let Ok(high_score) = pkv.get::<HighScore>("high_score") {
-        if new_score.score > high_score.score {
-            pkv.set("high_score", &new_score).map_err(|e| {
-                println!("Error saving high score: {}", e);
-            }).ok();
-        }
-    } else {
-        pkv.set("high_score", &new_score).map_err(|e| {
-            println!("Error saving high score: {}", e);
-        }).ok();
-    }
     scoreboard.score = 0;
     scoreboard.kills = 0;
 }

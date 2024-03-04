@@ -249,4 +249,10 @@ impl EnemyBundle {
             }
         }
     }
+
+    pub fn cleanup_sprites(mut commands: Commands, query: Query<Entity, With<Enemy>>) {
+        for entity in &query {
+            commands.entity(entity).despawn();
+        }
+    }
 }

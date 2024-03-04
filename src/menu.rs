@@ -1,9 +1,10 @@
 use crate::components::*;
 use crate::constants::*;
 use crate::AppState;
+use crate::HighScore;
+use crate::Scoreboard;
 use bevy::prelude::*;
 use bevy_pkv::PkvStore;
-use crate::HighScore;
 
 #[derive(Event)]
 pub enum MenuEvent {
@@ -162,15 +163,42 @@ pub fn cleanup_main_menu(
     }
 }
 
-pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>, pkv: Res<PkvStore>) {
+pub fn setup_game_over(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut pkv: ResMut<PkvStore>,
+    scoreboard: Res<Scoreboard>,
+) {
     let title_font: Handle<Font> = asset_server.load("fonts/DungeonFont.ttf");
+    let body_font = asset_server.load("fonts/quaver.ttf");
     let high_score: HighScore = pkv.get::<HighScore>("high_score").unwrap();
+
+    let current_score = HighScore {
+        score: scoreboard.score,
+        kills: scoreboard.kills,
+    };
+    if let Ok(high_score) = pkv.get::<HighScore>("high_score") {
+        if current_score.score > high_score.score {
+            pkv.set("high_score", &current_score)
+                .map_err(|e| {
+                    println!("Error saving high score: {}", e);
+                })
+                .ok();
+        }
+    } else {
+        pkv.set("high_score", &current_score)
+            .map_err(|e| {
+                println!("Error saving high score: {}", e);
+            })
+            .ok();
+    }
 
     commands
         .spawn(NodeBundle {
             style: Style {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
+                flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 top: Val::Px(-100.),
@@ -195,11 +223,24 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>, p
 
             parent.spawn((
                 TextBundle::from_section(
-                    format!("High Score: {:?}", high_score),
+                    format!("Your Score: {}", current_score.score),
                     TextStyle {
-                        font_size: 50.0,
+                        font_size: 24.0,
                         color: Color::WHITE,
-                        font: title_font.clone(),
+                        font: body_font.clone(),
+                    },
+                )
+                .with_text_justify(JustifyText::Center),
+                UI_LAYER,
+            ));
+
+            parent.spawn((
+                TextBundle::from_section(
+                    format!("High Score: {}", high_score.score),
+                    TextStyle {
+                        font_size: 24.0,
+                        color: Color::GOLD,
+                        font: body_font.clone(),
                     },
                 )
                 .with_text_justify(JustifyText::Center),
@@ -207,13 +248,12 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>, p
             ));
         });
 
-    let font = asset_server.load("fonts/quaver.ttf");
     let texture_handle: Handle<Image> = asset_server.load("buttons/9slice.png");
 
     let text_style = TextStyle {
         color: Color::WHITE,
         font_size: 24.0,
-        font,
+        font: body_font,
     };
 
     let slicer = TextureSlicer {
