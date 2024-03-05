@@ -188,7 +188,7 @@ impl EnemyBundle {
     pub fn update_enemies(
         mut commands: Commands,
         mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-        mut enemies: Query<(Entity, &mut Enemy, &Transform), Without<Pawn>>,
+        mut enemies: Query<(Entity, &mut Enemy, &Transform, &mut Sprite), Without<Pawn>>,
         time: Res<Time>,
         mut events: EventWriter<ScoreEvent>,
         mut gizmos: Gizmos,
@@ -203,7 +203,8 @@ impl EnemyBundle {
             gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::YELLOW);
         }
 
-        for (entity, mut enemy, &transform) in &mut enemies {
+        for (entity, mut enemy, &transform, mut sprite) in &mut enemies {
+            sprite.color = Color::WHITE;
             let enemy_rect = Rect::from_center_size(
                 transform.translation.truncate(),
                 Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
@@ -228,6 +229,7 @@ impl EnemyBundle {
                         SFX,
                     ));
                 } else {
+                    sprite.color = Color::RED;
                     enemy.health = health as u32;
                     events.send(ScoreEvent::EnemyHit);
                 }
