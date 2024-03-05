@@ -94,7 +94,7 @@ impl WeaponBundle {
     ) {
         for mut transform in &mut query {
             let pawn_transform = pawn_query.single();
-            transform.0.translation = pawn_transform.translation;
+            transform.0.translation = pawn_transform.translation.truncate().extend(1.);
         }
     }
 
