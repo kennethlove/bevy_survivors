@@ -1,5 +1,6 @@
 use crate::components::*;
 use crate::constants::*;
+use crate::pawn;
 use bevy::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
@@ -88,40 +89,12 @@ impl WeaponBundle {
     }
 
     pub fn move_weapon(
-        time: Res<Time>,
-        keyboard_input: Res<ButtonInput<KeyCode>>,
-        mut query: Query<&mut Transform, With<Weapon>>,
+        mut query: Query<(&mut Transform, &Weapon), Without<Pawn>>,
+        pawn_query: Query<&Transform, With<Pawn>>,
     ) {
         for mut transform in &mut query {
-            let mut direction = Vec3::ZERO;
-            if keyboard_input.pressed(KeyCode::KeyW) {
-                direction.y += 1.;
-            }
-            if keyboard_input.pressed(KeyCode::KeyS) {
-                direction.y -= 1.;
-            }
-            if keyboard_input.pressed(KeyCode::KeyA) {
-                direction.x -= 1.;
-            }
-            if keyboard_input.pressed(KeyCode::KeyD) {
-                direction.x += 1.;
-            }
-            if direction != Vec3::ZERO {
-                let mut speed = PAWN_SPEED;
-                if keyboard_input.pressed(KeyCode::ShiftLeft)
-                    || keyboard_input.pressed(KeyCode::ShiftRight)
-                {
-                    speed = PAWN_SPEED_FAST;
-                }
-
-                let mut new_translation =
-                    transform.translation + direction.normalize() * speed * time.delta_seconds();
-
-                new_translation.x = new_translation.x.clamp(-SAFE_WIDTH / 2., SAFE_WIDTH / 2.);
-                new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
-
-                transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
-            }
+            let pawn_transform = pawn_query.single();
+            transform.0.translation = pawn_transform.translation;
         }
     }
 

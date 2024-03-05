@@ -112,8 +112,8 @@ impl PawnBundle {
                 let mut new_translation =
                     transform.translation + direction.normalize() * speed * time.delta_seconds();
 
-                new_translation.x = new_translation.x.clamp(-SAFE_WIDTH / 2., SAFE_WIDTH / 2.);
-                new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
+                // new_translation.x = new_translation.x.clamp(-SAFE_WIDTH / 2., SAFE_WIDTH / 2.);
+                // new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
 
                 transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
 

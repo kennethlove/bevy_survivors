@@ -138,7 +138,8 @@ fn main() {
             ((
                 PawnBundle::collisions,
                 PawnBundle::move_pawn,
-                WeaponBundle::move_weapon,
+                move_camera.after(PawnBundle::move_pawn),
+                WeaponBundle::move_weapon.after(PawnBundle::move_pawn),
                 EnemyBundle::move_enemies,
                 EnemyBundle::update_enemies,
                 EnemyBundle::spawn_enemies,
@@ -226,6 +227,14 @@ fn setup_camera(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     ));
 
     commands.spawn((Camera2dBundle::default(), MainCamera));
+}
+
+fn move_camera(
+    mut query: Query<(&mut Transform, &MainCamera), Without<Pawn>>,
+    pawn_query: Query<&Transform, With<Pawn>>,
+) {
+    let mut camera = query.single_mut();
+    camera.0.translation = pawn_query.single().translation.truncate().extend(10.0);
 }
 
 fn draw_border(mut gizmos: Gizmos) {
