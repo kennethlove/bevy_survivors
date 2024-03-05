@@ -10,6 +10,7 @@ bevy = "0.13"
 bevy_pkv = "0.10.0"
 fastrand = "2.0.1"
 serde = { version = "1.0.197", features = ["derive"] }
+bevy_ecs_tilemap = { git = "https://github.com/rparrett/bevy_ecs_tilemap", branch = "bevy13" }
 
 [profile.dev]
 opt-level = 1
