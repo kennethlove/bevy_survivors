@@ -55,33 +55,18 @@ impl EnemyBundle {
         player: Query<&Transform, With<Pawn>>,
     ) -> Vec3 {
         let player_pos = player.single().translation;
+        let min_x: usize = (player_pos.x + (WIDTH as f32 / 2.)).trunc() as usize;
+        let max_x: usize = min_x + SPRITE_WIDTH as usize;
 
-        let mut x = fastrand::i32(..) % SAFE_WIDTH as i32;
-        if fastrand::bool() {
-            x = -x;
-        }
-        x = x.clamp(
-            ((-SAFE_WIDTH + SPRITE_WIDTH as f32) / 2.) as i32,
-            ((SAFE_WIDTH - SPRITE_WIDTH as f32) / 2.) as i32,
-        );
+        let max_y: usize = (HEIGHT as f32 / 2.).trunc() as usize + SPRITE_HEIGHT as usize;
 
-        let mut y = fastrand::i32(..) % SAFE_HEIGHT as i32;
-        if fastrand::bool() {
-            y = -y;
-        }
-        y = y.clamp(
-            ((-SAFE_HEIGHT + SPRITE_HEIGHT as f32) / 2.) as i32,
-            ((SAFE_HEIGHT - SPRITE_HEIGHT as f32) / 2.) as i32,
-        );
+        let mut x = fastrand::usize(min_x..max_x) as isize;
+        let mut y = fastrand::usize(..max_y) as isize;
 
-        let translation = Vec3::new(x as f32, y as f32, 0.);
-        let sprite_area = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
-        if Aabb2d::new(translation.truncate(), sprite_area)
-            .intersects(&Aabb2d::new(player_pos.truncate(), sprite_area))
-        {
-            return EnemyBundle::find_good_spot(_enemies, player);
-        }
-        translation
+        if fastrand::bool() { x = -x; }
+        if fastrand::bool() { y = -y; }
+
+        Vec3::new(x as f32, y as f32, 0.)
     }
 
     pub fn spawn_enemies(
@@ -126,10 +111,10 @@ impl EnemyBundle {
 
         let good_spot = EnemyBundle::find_good_spot(enemies, player);
 
-        if count < 3 {
+        if count < 30 {
             let enemy = match scoreboard.kills {
-                0..=3 => green_kobold.clone(),
-                4..=6 => troll.clone(),
+                0..=30 => green_kobold.clone(),
+                31..=36 => troll.clone(),
                 _ => green_kobold.clone(),
             };
 
