@@ -253,7 +253,7 @@ fn setup_background(
                 .spawn(TileBundle {
                     position: tile_pos,
                     tilemap_id: TilemapId(tilemap_entity),
-                    ..default()
+                    ..Default::default()
                 })
                 .id();
             tile_storage.set(&tile_pos, tile_entity);
@@ -272,7 +272,7 @@ fn setup_background(
         texture: TilemapTexture::Single(texture_handle),
         tile_size,
         transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
-        ..default()
+        ..Default::default()
     });
 
     #[cfg(all(not(feature = "atlas"), feature = "render"))]
@@ -283,23 +283,6 @@ fn setup_background(
             ..Default::default()
         });
     }
-
-    // commands.spawn((
-    //     SpriteBundle {
-    //         texture: asset_server.load("floors/floor_1.png"),
-    //         transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
-    //         sprite: Sprite {
-    //             custom_size: Some(Vec2::new(WIDTH, HEIGHT)),
-    //             ..default()
-    //         },
-    //         ..default()
-    //     },
-    //     ImageScaleMode::Tiled {
-    //         tile_x: true,
-    //         tile_y: true,
-    //         stretch_value: 1.,
-    //     },
-    // ));
 
     next_state.set(AppState::MainMenu);
 }
