@@ -176,7 +176,10 @@ pub fn setup_game_over(
         font_size: 24.0,
         font: body_font.clone(),
     };
-    let high_score: HighScore = pkv.get::<HighScore>("high_score").unwrap();
+    let high_score: HighScore = match pkv.get::<HighScore>("high_score") {
+        Ok(high_score) => high_score,
+        Err(_) => HighScore { score: 0, kills: 0 },
+    };
 
     let current_score = HighScore {
         score: scoreboard.score,
@@ -184,10 +187,12 @@ pub fn setup_game_over(
     };
     if let Ok(high_score) = pkv.get::<HighScore>("high_score") {
         if current_score.score > high_score.score {
-            pkv.set("high_score", &current_score).expect("Failed to save high score");
+            pkv.set("high_score", &current_score)
+                .expect("Failed to save high score");
         }
     } else {
-        pkv.set("high_score", &current_score).expect("Failed to save high score");
+        pkv.set("high_score", &current_score)
+            .expect("Failed to save high score");
     }
 
     commands
