@@ -171,6 +171,11 @@ pub fn setup_game_over(
 ) {
     let title_font: Handle<Font> = asset_server.load("fonts/DungeonFont.ttf");
     let body_font = asset_server.load("fonts/quaver.ttf");
+    let body_text_style = TextStyle {
+        color: Color::WHITE,
+        font_size: 24.0,
+        font: body_font.clone(),
+    };
     let high_score: HighScore = pkv.get::<HighScore>("high_score").unwrap();
 
     let current_score = HighScore {
@@ -179,18 +184,10 @@ pub fn setup_game_over(
     };
     if let Ok(high_score) = pkv.get::<HighScore>("high_score") {
         if current_score.score > high_score.score {
-            pkv.set("high_score", &current_score)
-                .map_err(|e| {
-                    println!("Error saving high score: {}", e);
-                })
-                .ok();
+            pkv.set("high_score", &current_score).expect("Failed to save high score");
         }
     } else {
-        pkv.set("high_score", &current_score)
-            .map_err(|e| {
-                println!("Error saving high score: {}", e);
-            })
-            .ok();
+        pkv.set("high_score", &current_score).expect("Failed to save high score");
     }
 
     commands
@@ -224,11 +221,7 @@ pub fn setup_game_over(
             parent.spawn((
                 TextBundle::from_section(
                     format!("Your Score: {}", current_score.score),
-                    TextStyle {
-                        font_size: 24.0,
-                        color: Color::WHITE,
-                        font: body_font.clone(),
-                    },
+                    body_text_style.clone(),
                 )
                 .with_text_justify(JustifyText::Center),
                 UI_LAYER,
@@ -249,13 +242,6 @@ pub fn setup_game_over(
         });
 
     let texture_handle: Handle<Image> = asset_server.load("buttons/9slice.png");
-
-    let text_style = TextStyle {
-        color: Color::WHITE,
-        font_size: 24.0,
-        font: body_font,
-    };
-
     let slicer = TextureSlicer {
         border: BorderRect::square(16.0),
         center_scale_mode: SliceScaleMode::Stretch,
@@ -304,7 +290,7 @@ pub fn setup_game_over(
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
                         "Restart".to_string(),
-                        text_style.clone(),
+                        body_text_style.clone(),
                     ));
                 });
         });
@@ -340,7 +326,7 @@ pub fn game_over_button_system(
                 state.set(AppState::InGame);
             }
             Interaction::Hovered => {
-                text.sections[0].style.font_size = 26.0;
+                text.sections[0].style.font_size = 28.0;
             }
             Interaction::None => {
                 text.sections[0].style.font_size = 24.0;
