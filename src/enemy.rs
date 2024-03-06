@@ -73,6 +73,10 @@ impl EnemyBundle {
             y = -y;
         }
 
+        let enemy_transform = Transform::from_translation(Vec3::new(x as f32, y as f32, 0.));
+        if enemy_transform.translation.distance(player_pos) < WIDTH / 4. {
+            return EnemyBundle::find_good_spot(_enemies, player);
+        }
         Vec3::new(x as f32, y as f32, 0.)
     }
 
