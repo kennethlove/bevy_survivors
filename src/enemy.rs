@@ -11,7 +11,7 @@ const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 7 };
 #[derive(Component, Clone)]
 pub struct EnemySprite {
     sprite: String,
-    layout: Handle<TextureAtlasLayout>,
+    layout: TextureAtlasLayout,
     idle: AnimationIndices,
     run: AnimationIndices,
     pub height: f32,
@@ -39,7 +39,7 @@ impl Default for EnemyBundle {
             },
             sprite_details: EnemySprite {
                 sprite: "16x32.png".to_string(),
-                layout: Handle::default(),
+                layout: TextureAtlasLayout::new_empty(Vec2::ZERO),
                 idle: IDLE_ANIMATION,
                 run: RUN_ANIMATION,
                 height: 16.,
@@ -81,13 +81,13 @@ impl EnemyBundle {
 
         let green_kobold = EnemySprite {
             sprite: "enemies/green_kobold.png".to_string(),
-            layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
+            layout: TextureAtlasLayout::from_grid(
                 Vec2::new(16., 24.),
                 8,
                 1,
                 None,
                 None,
-            )),
+            ),
             idle: IDLE_ANIMATION,
             run: RUN_ANIMATION,
             width: 16.,
@@ -96,13 +96,13 @@ impl EnemyBundle {
 
         let troll = EnemySprite {
             sprite: "enemies/troll.png".to_string(),
-            layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
+            layout: TextureAtlasLayout::from_grid(
                 Vec2::new(48., 38.),
                 12,
                 1,
                 Some(Vec2::new(16., 0.)),
                 None,
-            )),
+            ),
             idle: AnimationIndices { first: 0, last: 1 },
             run: AnimationIndices { first: 0, last: 11 },
             width: 48.,
@@ -132,7 +132,7 @@ impl EnemyBundle {
                     texture,
                     transform, // Controls the placement of the sprite
                     atlas: TextureAtlas {
-                        layout,
+                        layout: texture_atlas_layouts.add(layout),
                         index: animation_indices.first,
                     },
                     ..default()
