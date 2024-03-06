@@ -1,12 +1,10 @@
 use crate::components::*;
-use crate::constants::*;
-use crate::pawn;
 use bevy::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
 const WEAPON_01: Weapon = Weapon {
-    damage_amount: 5.,
+    damage_amount: 50.,
     damage_frame_end: 4,
     damage_frame_start: 0,
     damage_scale: 1.,
