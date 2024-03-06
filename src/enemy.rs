@@ -6,11 +6,11 @@ use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
 use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
-const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 7 };
+const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
 
 #[derive(Component, Clone)]
 pub struct EnemySprite {
-    sprite: String,
+    filename: String,
     layout: TextureAtlasLayout,
     idle: AnimationIndices,
     run: AnimationIndices,
@@ -36,12 +36,9 @@ impl Default for EnemyBundle {
             sprite: SpriteSheetBundle::default(),
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            pawn: Enemy {
-                health: 1.,
-                score: 1.,
-            },
+            pawn: Enemy,
             sprite_details: EnemySprite {
-                sprite: "16x32.png".to_string(),
+                filename: "16x32.png".to_string(),
                 layout: TextureAtlasLayout::new_empty(Vec2::ZERO),
                 idle: IDLE_ANIMATION,
                 run: RUN_ANIMATION,
@@ -61,10 +58,10 @@ impl EnemyBundle {
         player: Query<&Transform, With<Pawn>>,
     ) -> Vec3 {
         let player_pos = player.single().translation;
-        let min_x: usize = (player_pos.x + (WIDTH as f32 / 2.)).trunc() as usize;
-        let max_x: usize = min_x + SPRITE_WIDTH as usize;
+        let min_x: usize = (player_pos.x + (WIDTH / 2.)).trunc() as usize;
+        let max_x: usize = min_x + (SPRITE_WIDTH * 2) as usize;
 
-        let max_y: usize = (HEIGHT as f32 / 2.).trunc() as usize + SPRITE_HEIGHT as usize;
+        let max_y: usize = (HEIGHT / 2.).trunc() as usize + (SPRITE_HEIGHT * 2) as usize;
 
         let mut x = fastrand::usize(min_x..max_x) as isize;
         let mut y = fastrand::usize(..max_y) as isize;
@@ -90,19 +87,19 @@ impl EnemyBundle {
         let count = enemies.iter().count();
 
         let green_kobold = EnemySprite {
-            sprite: "enemies/green_kobold.png".to_string(),
-            layout: TextureAtlasLayout::from_grid(Vec2::new(16., 24.), 8, 1, None, None),
-            idle: IDLE_ANIMATION,
-            run: RUN_ANIMATION,
+            filename: "enemies/green_kobold.png".to_string(),
+            layout: TextureAtlasLayout::from_grid(Vec2::new(16., 20.), 8, 1, None, None),
+            idle: AnimationIndices { first: 0, last: 1 },
+            run: AnimationIndices { first: 0, last: 7 },
             width: 16.,
-            height: 24.,
+            height: 20.,
             speed: 0.3,
             health: 100.,
             score: 100.,
         };
 
         let troll = EnemySprite {
-            sprite: "enemies/troll.png".to_string(),
+            filename: "enemies/troll.png".to_string(),
             layout: TextureAtlasLayout::from_grid(
                 Vec2::new(48., 38.),
                 12,
@@ -128,7 +125,7 @@ impl EnemyBundle {
                 _ => green_kobold.clone(),
             };
 
-            let texture: Handle<Image> = asset_server.load(&enemy.sprite);
+            let texture: Handle<Image> = asset_server.load(&enemy.filename);
             let layout = enemy.layout.clone();
             let animation_indices = AnimationIndices {
                 first: enemy.idle.first,
@@ -148,10 +145,7 @@ impl EnemyBundle {
                     ..default()
                 },
                 animation_indices,
-                pawn: Enemy {
-                    health: enemy.health,
-                    score: enemy.score,
-                },
+                pawn: Enemy,
                 sprite_details: enemy.clone(),
                 ..default()
             });
@@ -198,7 +192,7 @@ impl EnemyBundle {
     pub fn update_enemies(
         mut commands: Commands,
         mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-        mut enemies: Query<(Entity, &mut Enemy, &Transform, &mut Sprite), Without<Pawn>>,
+        mut enemies: Query<(Entity, &mut EnemySprite, &Transform, &mut Sprite), Without<Pawn>>,
         time: Res<Time>,
         mut events: EventWriter<ScoreEvent>,
         mut gizmos: Gizmos,
