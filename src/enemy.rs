@@ -87,7 +87,7 @@ impl EnemyBundle {
         let count = enemies.iter().count();
 
         let green_kobold = EnemySprite {
-            filename: "enemies/green_kobold.png".to_string(),
+            filename: String::from("enemies/green_kobold.png"),
             layout: TextureAtlasLayout::from_grid(Vec2::new(16., 20.), 8, 1, None, None),
             idle: AnimationIndices { first: 0, last: 1 },
             run: AnimationIndices { first: 0, last: 7 },
@@ -98,8 +98,20 @@ impl EnemyBundle {
             score: 100.,
         };
 
+        let blue_kobold = EnemySprite {
+            filename: String::from("enemies/blue_kobold.png"),
+            layout: TextureAtlasLayout::from_grid(Vec2::new(16., 20.), 8, 1, None, None),
+            idle: AnimationIndices { first: 0, last: 1 },
+            run: AnimationIndices { first: 0, last: 7 },
+            width: 16.,
+            height: 20.,
+            speed: 0.3,
+            health: 200.,
+            score: 200.,
+        };
+
         let troll = EnemySprite {
-            filename: "enemies/troll.png".to_string(),
+            filename: String::from("enemies/troll.png"),
             layout: TextureAtlasLayout::from_grid(
                 Vec2::new(48., 38.),
                 12,
@@ -118,10 +130,11 @@ impl EnemyBundle {
 
         let good_spot = EnemyBundle::find_good_spot(enemies, player);
 
-        if count < 300 {
+        if count < ((scoreboard.kills + 1) * 100) as usize {
             let enemy = match scoreboard.kills {
                 0..=50 => green_kobold.clone(),
-                51..=75 => troll.clone(),
+                51..=75 => blue_kobold.clone(),
+                76..=100 => troll.clone(),
                 _ => green_kobold.clone(),
             };
 
