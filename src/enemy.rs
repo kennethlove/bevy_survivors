@@ -80,17 +80,8 @@ impl EnemyBundle {
         Vec3::new(x as f32, y as f32, 0.)
     }
 
-    pub fn spawn_enemies(
-        mut commands: Commands,
-        asset_server: Res<AssetServer>,
-        mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-        enemies: Query<&Transform, With<Enemy>>,
-        player: Query<&Transform, With<Pawn>>,
-        scoreboard: Res<Scoreboard>,
-    ) {
-        let count = enemies.iter().count();
-
-        let green_kobold = EnemySprite {
+    fn green_kobold() -> EnemySprite {
+        EnemySprite {
             filename: String::from("enemies/green_kobold.png"),
             layout: TextureAtlasLayout::from_grid(Vec2::new(16., 20.), 8, 1, None, None),
             idle: AnimationIndices { first: 0, last: 1 },
@@ -100,9 +91,11 @@ impl EnemyBundle {
             speed: 0.3,
             health: 100.,
             score: 100.,
-        };
+        }
+    }
 
-        let blue_kobold = EnemySprite {
+    fn blue_kobold() -> EnemySprite {
+        EnemySprite {
             filename: String::from("enemies/blue_kobold.png"),
             layout: TextureAtlasLayout::from_grid(Vec2::new(16., 20.), 8, 1, None, None),
             idle: AnimationIndices { first: 0, last: 1 },
@@ -112,9 +105,11 @@ impl EnemyBundle {
             speed: 0.3,
             health: 200.,
             score: 200.,
-        };
+        }
+    }
 
-        let troll = EnemySprite {
+    fn troll() -> EnemySprite {
+        EnemySprite {
             filename: String::from("enemies/troll.png"),
             layout: TextureAtlasLayout::from_grid(
                 Vec2::new(48., 38.),
@@ -130,16 +125,27 @@ impl EnemyBundle {
             speed: 0.1,
             health: 500.,
             score: 1000.,
-        };
+        }
+    }
+
+    pub fn spawn_enemies(
+        mut commands: Commands,
+        asset_server: Res<AssetServer>,
+        mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+        enemies: Query<&Transform, With<Enemy>>,
+        player: Query<&Transform, With<Pawn>>,
+        scoreboard: Res<Scoreboard>,
+    ) {
+        let count = enemies.iter().count();
 
         let good_spot = EnemyBundle::find_good_spot(enemies, player);
 
         if count < ((scoreboard.kills + 1) * 100) as usize {
             let enemy = match scoreboard.kills {
-                0..=50 => green_kobold.clone(),
-                51..=75 => blue_kobold.clone(),
-                76..=100 => troll.clone(),
-                _ => green_kobold.clone(),
+                0..=50 => Self::green_kobold(),
+                51..=75 => Self::blue_kobold(),
+                76..=100 => Self::troll(),
+                _ => Self::green_kobold(),
             };
 
             let texture: Handle<Image> = asset_server.load(&enemy.filename);
@@ -149,7 +155,7 @@ impl EnemyBundle {
                 last: enemy.idle.last,
             };
             let mut transform = Transform::from_translation(good_spot);
-            transform = transform.with_scale(Vec3::splat(2.));
+            transform = transform.with_scale(Vec3::splat(1.));
 
             commands.spawn(EnemyBundle {
                 sprite: SpriteSheetBundle {
