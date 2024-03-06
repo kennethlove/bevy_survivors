@@ -298,6 +298,28 @@ pub fn setup_game_over(
                         body_text_style.clone(),
                     ));
                 });
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::Center,
+                            width: Val::Px(150.),
+                            height: Val::Px(50.),
+                            ..default()
+                        },
+                        image: texture_handle.clone().into(),
+                        ..default()
+                    },
+                    ImageScaleMode::Sliced(slicer.clone()),
+                    PlayButton,
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Quit".to_string(),
+                        body_text_style.clone(),
+                    ));
+                });
         });
 }
 
@@ -328,7 +350,11 @@ pub fn game_over_button_system(
         let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
-                state.set(AppState::InGame);
+                if text.sections[0].value == "Restart" {
+                    state.set(AppState::InGame);
+                } else if text.sections[0].value == "Quit" {
+                    std::process::exit(0);
+                }
             }
             Interaction::Hovered => {
                 text.sections[0].style.font_size = 28.0;
