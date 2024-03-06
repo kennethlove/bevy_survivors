@@ -17,6 +17,8 @@ pub struct EnemySprite {
     speed: f32,
     pub height: f32,
     pub width: f32,
+    health: f32,
+    score: f32,
 }
 
 #[derive(Bundle)]
@@ -35,8 +37,8 @@ impl Default for EnemyBundle {
             animation_indices: IDLE_ANIMATION,
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Enemy {
-                health: 1,
-                score: 1,
+                health: 1.,
+                score: 1.,
             },
             sprite_details: EnemySprite {
                 sprite: "16x32.png".to_string(),
@@ -46,6 +48,8 @@ impl Default for EnemyBundle {
                 height: 16.,
                 width: 16.,
                 speed: 0.1,
+                health: 1.,
+                score: 1.,
             },
         }
     }
@@ -93,6 +97,8 @@ impl EnemyBundle {
             width: 16.,
             height: 24.,
             speed: 0.3,
+            health: 100.,
+            score: 100.,
         };
 
         let troll = EnemySprite {
@@ -109,14 +115,16 @@ impl EnemyBundle {
             width: 48.,
             height: 38.,
             speed: 0.1,
+            health: 500.,
+            score: 1000.,
         };
 
         let good_spot = EnemyBundle::find_good_spot(enemies, player);
 
-        if count < 30 {
+        if count < 300 {
             let enemy = match scoreboard.kills {
-                0..=30 => green_kobold.clone(),
-                31..=36 => troll.clone(),
+                0..=50 => green_kobold.clone(),
+                51..=75 => troll.clone(),
                 _ => green_kobold.clone(),
             };
 
@@ -141,8 +149,8 @@ impl EnemyBundle {
                 },
                 animation_indices,
                 pawn: Enemy {
-                    health: 100 * scoreboard.kills + 1,
-                    score: 20 * scoreboard.kills + 1,
+                    health: enemy.health,
+                    score: enemy.score,
                 },
                 sprite_details: enemy.clone(),
                 ..default()
@@ -218,11 +226,10 @@ impl EnemyBundle {
                 && weapon_atlas.index <= weapon.damage_frame_end
                 && weapon_atlas.index >= weapon.damage_frame_start
             {
-                let health = enemy.health as f32 - weapon.damage_amount * weapon.damage_scale;
-                let health = std::cmp::max(0, health as i32);
-                if health == 0 {
+                let health = enemy.health - weapon.damage_amount * weapon.damage_scale;
+                if health <= 0. {
                     commands.get_entity(entity).unwrap().despawn();
-                    events.send(ScoreEvent::Scored(enemy.score));
+                    events.send(ScoreEvent::Scored(enemy.score as u32));
                     commands.spawn((
                         AudioBundle {
                             source: asset_server.load("sfx/enemy_death.ogg"),
@@ -232,7 +239,7 @@ impl EnemyBundle {
                     ));
                 } else {
                     sprite.color = Color::RED;
-                    enemy.health = health as u32;
+                    enemy.health = health;
                     events.send(ScoreEvent::EnemyHit);
                 }
             }

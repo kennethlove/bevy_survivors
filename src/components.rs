@@ -3,13 +3,13 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Pawn {
     pub speed: f32,
-    pub health: u32,
+    pub health: f32,
 }
 
 #[derive(Component)]
 pub struct Enemy {
-    pub health: u32,
-    pub score: u32,
+    pub health: f32,
+    pub score: f32,
 }
 
 #[derive(Clone, Component, Debug)]

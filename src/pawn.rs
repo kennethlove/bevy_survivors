@@ -31,7 +31,7 @@ impl Default for PawnBundle {
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn {
                 speed: PAWN_SPEED,
-                health: 1,
+                health: 1.,
             },
         }
     }
@@ -66,7 +66,7 @@ impl PawnBundle {
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             pawn: Pawn {
                 speed: PAWN_SPEED,
-                health: 100,
+                health: 100.,
             },
         });
     }
@@ -109,12 +109,8 @@ impl PawnBundle {
                     speed = PAWN_SPEED_FAST;
                 }
 
-                let mut new_translation =
+                let new_translation =
                     transform.translation + direction.normalize() * speed * time.delta_seconds();
-
-                // new_translation.x = new_translation.x.clamp(-SAFE_WIDTH / 2., SAFE_WIDTH / 2.);
-                // new_translation.y = new_translation.y.clamp(-SAFE_HEIGHT / 2., SAFE_HEIGHT / 2.);
-
                 transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
 
                 new_animation_indices = RUN_ANIMATION;
@@ -158,13 +154,13 @@ impl PawnBundle {
             }
 
             if enemy_bb.intersects(&player_bb) {
-                let new_health = std::cmp::max(0, player_pawn.health as i32 - 1);
+                let new_health = std::cmp::max(0, player_pawn.health.round() as isize - 1);
 
                 if new_health == 0 {
                     state.set(AppState::GameOver);
                 }
 
-                player_pawn.health = new_health as u32;
+                player_pawn.health = new_health as f32;
             }
         }
     }
