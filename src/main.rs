@@ -19,15 +19,15 @@ use bevy::{
     window::{Window, WindowTheme},
 };
 use bevy_ecs_tilemap::prelude::*;
+use bevy_pkv::PkvStore;
 use components::*;
 use constants::*;
 use enemy::EnemyBundle;
 use menu::*;
 use pawn::PawnBundle;
+use serde::{Deserialize, Serialize};
 use ui::*;
 use weapon::WeaponBundle;
-use bevy_pkv::PkvStore;
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -121,7 +121,6 @@ fn main() {
                 animate_sprites,
                 audio_system,
                 main_menu_button_system.run_if(in_state(AppState::MainMenu)),
-                draw_border,
                 PawnBundle::update_score,
                 update_ui
                     .after(PawnBundle::update_score)
@@ -237,18 +236,13 @@ fn move_camera(
     camera.0.translation = pawn_query.single().translation.truncate().extend(10.0);
 }
 
-fn draw_border(mut gizmos: Gizmos) {
-    if DRAW_GIZMOS {
-        let safe_area = Vec2::new(SAFE_WIDTH, SAFE_HEIGHT);
-        gizmos.rect_2d(Vec2::ZERO, 0., safe_area, Color::WHITE);
-    }
-}
-
 fn setup_background(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<AppState>>,
-    #[cfg(all(not(feature = "atlas"), feature = "render"))] array_texture_loader: Res<ArrayTextureLoader>,
+    #[cfg(all(not(feature = "atlas"), feature = "render"))] array_texture_loader: Res<
+        ArrayTextureLoader,
+    >,
 ) {
     let texture_handle: Handle<Image> = asset_server.load("floors/tiles.png");
     let map_size = TilemapSize { x: 640, y: 320 };
@@ -353,9 +347,7 @@ fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn reset(
-    mut scoreboard: ResMut<Scoreboard>,
-) {
+fn reset(mut scoreboard: ResMut<Scoreboard>) {
     scoreboard.score = 0;
     scoreboard.kills = 0;
 }

@@ -14,6 +14,7 @@ pub struct EnemySprite {
     layout: TextureAtlasLayout,
     idle: AnimationIndices,
     run: AnimationIndices,
+    speed: f32,
     pub height: f32,
     pub width: f32,
 }
@@ -44,6 +45,7 @@ impl Default for EnemyBundle {
                 run: RUN_ANIMATION,
                 height: 16.,
                 width: 16.,
+                speed: 0.1,
             },
         }
     }
@@ -63,8 +65,12 @@ impl EnemyBundle {
         let mut x = fastrand::usize(min_x..max_x) as isize;
         let mut y = fastrand::usize(..max_y) as isize;
 
-        if fastrand::bool() { x = -x; }
-        if fastrand::bool() { y = -y; }
+        if fastrand::bool() {
+            x = -x;
+        }
+        if fastrand::bool() {
+            y = -y;
+        }
 
         Vec3::new(x as f32, y as f32, 0.)
     }
@@ -81,17 +87,12 @@ impl EnemyBundle {
 
         let green_kobold = EnemySprite {
             sprite: "enemies/green_kobold.png".to_string(),
-            layout: TextureAtlasLayout::from_grid(
-                Vec2::new(16., 24.),
-                8,
-                1,
-                None,
-                None,
-            ),
+            layout: TextureAtlasLayout::from_grid(Vec2::new(16., 24.), 8, 1, None, None),
             idle: IDLE_ANIMATION,
             run: RUN_ANIMATION,
             width: 16.,
             height: 24.,
+            speed: 0.3,
         };
 
         let troll = EnemySprite {
@@ -107,6 +108,7 @@ impl EnemyBundle {
             run: AnimationIndices { first: 0, last: 11 },
             width: 48.,
             height: 38.,
+            speed: 0.1,
         };
 
         let good_spot = EnemyBundle::find_good_spot(enemies, player);
@@ -170,7 +172,7 @@ impl EnemyBundle {
             let mut direction = player_pos - transform.translation;
             direction = direction.normalize();
             sprite.flip_x = direction.x < 0.;
-            transform.translation += direction * ENEMY_SPEED;
+            transform.translation += direction * sprite_details.speed;
 
             let new_animation_indices = AnimationIndices {
                 first: sprite_details.run.first,
