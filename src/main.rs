@@ -19,6 +19,7 @@ use bevy::{
     window::{Window, WindowTheme},
 };
 use bevy_ecs_tilemap::prelude::*;
+use bevy_kira_audio::prelude::*;
 use bevy_pkv::PkvStore;
 use components::*;
 use constants::*;
@@ -45,6 +46,12 @@ struct Scoreboard {
     kills: u32,
 }
 
+#[derive(Resource)]
+pub struct BackgroundMusic;
+
+#[derive(Resource)]
+pub struct SoundFX;
+
 #[derive(Serialize, Deserialize, Debug)]
 struct HighScore {
     score: u32,
@@ -64,6 +71,8 @@ fn main() {
         .insert_resource(Scoreboard { score: 0, kills: 0 })
         .insert_resource(PkvStore::new("kennethlove", "Survivors"))
         .init_state::<AppState>()
+        .add_audio_channel::<BackgroundMusic>()
+        .add_audio_channel::<SoundFX>()
         .add_event::<ScoreEvent>()
         .add_event::<MenuEvent>()
         .add_plugins((
@@ -86,6 +95,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             // FrameTimeDiagnosticsPlugin,
             // LogDiagnosticsPlugin::default(),
+            AudioPlugin,
             TilemapPlugin,
         ))
         .add_systems(Startup, (setup_camera, setup_background, setup_music))
@@ -312,39 +322,36 @@ fn pause(mut state: ResMut<NextState<AppState>>, keyboard_input: Res<ButtonInput
     }
 }
 
+#[derive(Resource)]
+struct AudioHandle(Handle<AudioInstance>);
+
+
 fn audio_system(
     state: Res<State<AppState>>,
-    sfx: Query<&AudioSink, With<SFX>>,
-    bg: Query<&AudioSink, With<BackgroundMusic>>,
+    bg: ResMut<AudioChannel<BackgroundMusic>>,
+    sfx: Res<AudioChannel<SoundFX>>,
 ) {
     match state.get() {
         AppState::InGame => {
-            for sink in &bg {
-                sink.set_volume(0.5);
-            }
-            for sink in &sfx {
-                sink.play();
-            }
+            // bg.with_volume(0.5);
+            sfx.resume();//.with_volume(0.5);
         }
         _ => {
-            for sink in &bg {
-                sink.set_volume(0.1);
-            }
-            for sink in &sfx {
-                sink.pause();
-            }
+            // bg.with_volume(0.1);
+            sfx.pause();
         }
     }
 }
 
-fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((
-        AudioBundle {
-            source: asset_server.load("music/Arcade.ogg"),
-            settings: PlaybackSettings::LOOP,
-        },
-        BackgroundMusic,
-    ));
+fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>, background: Res<AudioChannel<BackgroundMusic>>) {
+    background.play(asset_server.load("music/Arcade.ogg")).with_volume(0.5).looped();
+    // commands.spawn((
+    //     AudioBundle {
+    //         source: asset_server.load("music/Arcade.ogg"),
+    //         settings: PlaybackSettings::LOOP,
+    //     },
+    //     BackgroundMusic,
+    // ));
 }
 
 fn reset(mut scoreboard: ResMut<Scoreboard>) {
