@@ -44,7 +44,7 @@ impl PawnBundle {
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) {
         let texture = asset_server.load("pawns/purple_knight.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 24.), 8, 1, None, None);
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(16., 22.), 8, 1, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         let animation_indices = IDLE_ANIMATION;
 
