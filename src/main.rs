@@ -137,14 +137,16 @@ fn main() {
         )
         .add_systems(Update, (
             audio_system,
-            move_camera,
-            animate_sprites,
-            PawnBundle::update_score.run_if(in_state(AppState::InGame)),
-            update_ui.run_if(in_state(AppState::InGame)),
-            update_hp.run_if(in_state(AppState::InGame)),
-            main_menu_button_system.run_if(in_state(AppState::MainMenu)),
-            pause.run_if(in_state(AppState::InGame)),
-            game_over_button_system.run_if(in_state(AppState::GameOver)),
+            main_menu_button_system,
+            (
+                move_camera,
+                animate_sprites,
+                PawnBundle::update_score,
+                update_ui,
+                update_hp,
+                pause,
+                game_over_button_system,
+            ).run_if(in_state(AppState::InGame))
         ))
         // .add_systems(Update, bevy::window::close_on_esc)
         .run();
