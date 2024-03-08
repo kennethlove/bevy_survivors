@@ -14,7 +14,7 @@ use bevy::{
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-    }, window::{Window, WindowTheme}
+    }, scene::ron::de, window::{Window, WindowTheme}
 };
 use bevy_ecs_tilemap::prelude::*;
 use bevy_kira_audio::prelude::*;
@@ -62,6 +62,11 @@ pub enum ScoreEvent {
     EnemyHit,
 }
 
+#[derive(Event, Debug)]
+pub enum MovementEvent {
+    Move(Vec2),
+}
+
 fn main() {
     App::new()
         .insert_resource(AssetMetaCheck::Never)
@@ -73,6 +78,7 @@ fn main() {
         .add_audio_channel::<SoundFX>()
         .add_event::<ScoreEvent>()
         .add_event::<MenuEvent>()
+        .add_event::<MovementEvent>()
         .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
@@ -127,11 +133,11 @@ fn main() {
             FixedUpdate,
             ((
                 PawnBundle::collisions,
+                PawnBundle::move_pawn,
+                WeaponBundle::move_weapon.after(PawnBundle::move_pawn),
                 EnemyBundle::move_enemies,
                 EnemyBundle::update_enemies,
                 EnemyBundle::spawn_enemies,
-                PawnBundle::move_pawn,
-                WeaponBundle::move_weapon.after(PawnBundle::move_pawn),
             )
                 .run_if(in_state(AppState::InGame)),),
         )
@@ -139,6 +145,7 @@ fn main() {
             audio_system,
             main_menu_button_system,
             (
+                movement,
                 move_camera,
                 animate_sprites,
                 PawnBundle::update_score,
@@ -150,6 +157,26 @@ fn main() {
         ))
         // .add_systems(Update, bevy::window::close_on_esc)
         .run();
+}
+
+fn movement(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut movement_events: EventWriter<MovementEvent>,
+) {
+    let mut movement = Vec2::ZERO;
+    if keyboard_input.pressed(KeyCode::KeyW) {
+        movement.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyS) {
+        movement.y -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        movement.x -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        movement.x += 1.0;
+    }
+    movement_events.send(MovementEvent::Move(movement));
 }
 
 fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {

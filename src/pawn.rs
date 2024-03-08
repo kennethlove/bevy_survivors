@@ -1,5 +1,5 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
-use crate::constants::*;
+use crate::{constants::*, MovementEvent};
 use crate::enemy::EnemySprite;
 use crate::weapon::Weapon;
 use crate::AppState;
@@ -73,7 +73,7 @@ impl PawnBundle {
 
     pub fn move_pawn(
         time: Res<Time>,
-        keyboard_input: Res<ButtonInput<KeyCode>>,
+        mut movement_events: EventReader<MovementEvent>,
         mut query: Query<
             (
                 &mut Transform,
@@ -84,38 +84,27 @@ impl PawnBundle {
             With<Pawn>,
         >,
     ) {
-        for (mut transform, mut animation_indices, mut atlas, mut sprite) in &mut query {
-            let mut new_animation_indices = IDLE_ANIMATION;
-            let mut direction = Vec3::ZERO;
-            if keyboard_input.pressed(KeyCode::KeyW) {
-                direction.y += 1.;
-            }
-            if keyboard_input.pressed(KeyCode::KeyS) {
-                direction.y -= 1.;
-            }
-            if keyboard_input.pressed(KeyCode::KeyA) {
-                direction.x -= 1.;
-                sprite.flip_x = true;
-            }
-            if keyboard_input.pressed(KeyCode::KeyD) {
-                direction.x += 1.;
-                sprite.flip_x = false;
-            }
-            if direction != Vec3::ZERO {
-                let mut speed = PAWN_SPEED;
-                if keyboard_input.pressed(KeyCode::ShiftLeft)
-                    || keyboard_input.pressed(KeyCode::ShiftRight)
-                {
-                    speed = PAWN_SPEED_FAST;
+        let (mut transform, mut animation_indices, mut atlas, mut sprite) = query.single_mut();
+        let mut new_animation_indices = IDLE_ANIMATION;
+        for event in movement_events.read() {
+            if let MovementEvent::Move(direction) = event {
+                let speed = PAWN_SPEED;
+                if direction == &Vec2::ZERO {
+                    new_animation_indices = IDLE_ANIMATION;
+                } else {
+                    if direction.x < 0. {
+                        sprite.flip_x = true;
+                    } else if direction.x > 0. {
+                        sprite.flip_x = false;
+                    }
+                    new_animation_indices = RUN_ANIMATION;
                 }
-
-                let new_translation =
-                    transform.translation + direction.normalize() * speed * time.delta_seconds();
-                transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
-
-                new_animation_indices = RUN_ANIMATION;
+                if direction != &Vec2::ZERO {
+                    let new_translation =
+                        transform.translation.truncate() + direction.normalize() * speed * time.delta_seconds();
+                    transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
+                }
             }
-
             animation_indices.first = new_animation_indices.first;
             animation_indices.last = new_animation_indices.last;
             if atlas.index > animation_indices.last || atlas.index < animation_indices.first {
