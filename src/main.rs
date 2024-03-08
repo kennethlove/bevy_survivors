@@ -9,16 +9,12 @@ mod weapon;
 use std::time::Duration;
 
 use bevy::{
-    asset::AssetMetaCheck,
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-    render::{
+    asset::AssetMetaCheck, audio, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*, render::{
         camera::RenderTarget,
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-    },
-    window::{Window, WindowTheme},
+    }, window::{Window, WindowTheme}
 };
 use bevy_ecs_tilemap::prelude::*;
 use bevy_kira_audio::prelude::*;
@@ -128,35 +124,28 @@ fn main() {
         .add_systems(OnEnter(AppState::GameOver), setup_game_over)
         .add_systems(OnExit(AppState::GameOver), (cleanup_game_over, reset))
         .add_systems(
-            Update,
-            (
-                animate_sprites,
-                audio_system,
-                main_menu_button_system.run_if(in_state(AppState::MainMenu)),
-                PawnBundle::update_score,
-                update_ui
-                    .after(PawnBundle::update_score)
-                    .run_if(in_state(AppState::InGame)),
-                update_hp
-                    .after(PawnBundle::update_score)
-                    .run_if(in_state(AppState::InGame)),
-                pause.run_if(in_state(AppState::InGame)),
-                game_over_button_system.run_if(in_state(AppState::GameOver)),
-            ),
-        )
-        .add_systems(
             FixedUpdate,
             ((
                 PawnBundle::collisions,
-                PawnBundle::move_pawn,
-                move_camera.after(PawnBundle::move_pawn),
-                WeaponBundle::move_weapon.after(PawnBundle::move_pawn),
                 EnemyBundle::move_enemies,
                 EnemyBundle::update_enemies,
                 EnemyBundle::spawn_enemies,
+                PawnBundle::move_pawn,
+                WeaponBundle::move_weapon.after(PawnBundle::move_pawn),
             )
                 .run_if(in_state(AppState::InGame)),),
         )
+        .add_systems(Update, (
+            audio_system,
+            move_camera,
+            animate_sprites,
+            PawnBundle::update_score.run_if(in_state(AppState::InGame)),
+            update_ui.run_if(in_state(AppState::InGame)),
+            update_hp.run_if(in_state(AppState::InGame)),
+            main_menu_button_system.run_if(in_state(AppState::MainMenu)),
+            pause.run_if(in_state(AppState::InGame)),
+            game_over_button_system.run_if(in_state(AppState::GameOver)),
+        ))
         // .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
@@ -244,6 +233,9 @@ fn move_camera(
     mut query: Query<(&mut Transform, &MainCamera), Without<Pawn>>,
     pawn_query: Query<&Transform, With<Pawn>>,
 ) {
+    if pawn_query.iter().count() == 0 {
+        return;
+    }
     let mut camera = query.single_mut();
     camera.0.translation = pawn_query.single().translation.truncate().extend(10.0);
 }
