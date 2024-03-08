@@ -1,9 +1,10 @@
 use crate::components::*;
 use crate::constants::*;
 use crate::weapon::Weapon;
-use crate::{ScoreEvent, Scoreboard};
+use crate::{ScoreEvent, Scoreboard, SoundFX};
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
@@ -220,6 +221,7 @@ impl EnemyBundle {
         mut events: EventWriter<ScoreEvent>,
         mut gizmos: Gizmos,
         asset_server: Res<AssetServer>,
+        sfx: Res<AudioChannel<SoundFX>>,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_circle = BoundingCircle::new(
@@ -247,13 +249,14 @@ impl EnemyBundle {
                 if health <= 0. {
                     commands.get_entity(entity).unwrap().despawn();
                     events.send(ScoreEvent::Scored(enemy.score as u32));
-                    commands.spawn((
-                        AudioBundle {
-                            source: asset_server.load("sfx/enemy_death.ogg"),
-                            ..default()
-                        },
-                        SFX,
-                    ));
+                    sfx.play(asset_server.load("sfx/enemy_death.ogg")).with_volume(0.2);
+                    // commands.spawn((
+                    //     AudioBundle {
+                    //         source: asset_server.load("sfx/enemy_death.ogg"),
+                    //         ..default()
+                    //     },
+                    //     SFX,
+                    // ));
                 } else {
                     sprite.color = Color::RED;
                     enemy.health = health;

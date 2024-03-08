@@ -1,5 +1,6 @@
-use crate::components::*;
+use crate::{components::*, SoundFX};
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
@@ -50,6 +51,7 @@ impl WeaponBundle {
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+        sfx: Res<AudioChannel<SoundFX>>,
     ) {
         let texture = asset_server.load("super/03.png");
         let layout = TextureAtlasLayout::from_grid(Vec2::new(32., 32.), 6, 2, None, None);
@@ -74,16 +76,17 @@ impl WeaponBundle {
                 animation_indices,
                 animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
                 weapon: WEAPON_01,
-            })
-            .with_children(|parent| {
-                parent.spawn((
-                    AudioBundle {
-                        source: asset_server.load("sfx/woosh2.ogg"),
-                        settings: PlaybackSettings::LOOP,
-                    },
-                    SFX,
-                ));
             });
+            sfx.play(asset_server.load("sfx/woosh2.ogg")).looped();
+            // .with_children(|parent| {
+            //     parent.spawn((
+            //         AudioBundle {
+            //             source: asset_server.load("sfx/woosh2.ogg"),
+            //             settings: PlaybackSettings::LOOP,
+            //         },
+            //         SFX,
+            //     ));
+            // });
     }
 
     pub fn move_weapon(
