@@ -1,6 +1,7 @@
 use crate::components::*;
 use crate::constants::*;
 use crate::weapon::Weapon;
+use crate::CollisionEvent;
 use crate::{ScoreEvent, Scoreboard, SoundFX};
 use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
 use bevy::prelude::*;
@@ -213,55 +214,84 @@ impl EnemyBundle {
         }
     }
 
-    pub fn update_enemies(
+    pub fn collide_with_weapon(
         mut commands: Commands,
-        mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-        mut enemies: Query<(Entity, &mut EnemySprite, &Transform, &mut Sprite), Without<Pawn>>,
+        mut enemies: Query<(Entity, &mut EnemySprite, &mut Sprite), With<Enemy>>,
+        weapon_query: Query<&Weapon>,
         time: Res<Time>,
-        mut events: EventWriter<ScoreEvent>,
-        mut gizmos: Gizmos,
+        mut events: EventReader<CollisionEvent>,
+        mut score_events: EventWriter<ScoreEvent>,
         asset_server: Res<AssetServer>,
         sfx: Res<AudioChannel<SoundFX>>,
     ) {
-        let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
-        let weapon_circle = BoundingCircle::new(
-            weapon_transform.translation.truncate(),
-            weapon_transform.scale.x * SPRITE_WIDTH as f32,
-        );
-        if DRAW_GIZMOS {
-            gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::YELLOW);
-        }
-
-        for (entity, mut enemy, &transform, mut sprite) in &mut enemies {
-            sprite.color = Color::WHITE;
-            let enemy_rect = Rect::from_center_size(
-                transform.translation.truncate(),
-                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
-            );
-            let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
-            let collision = weapon_circle.intersects(&enemy_aabb);
-            if collision
-                && weapon_timer.0.tick(time.delta()).just_finished()
-                && weapon_atlas.index <= weapon.damage_frame_end
-                && weapon_atlas.index >= weapon.damage_frame_start
-            {
-                let health = enemy.health - weapon.damage_amount * weapon.damage_scale;
-                if health <= 0. {
-                    commands.get_entity(entity).unwrap().despawn();
-                    events.send(ScoreEvent::Scored(enemy.score as u32));
-                    sfx.play(asset_server.load("sfx/enemy_death.ogg")).with_volume(0.2);
-                    // commands.spawn((
-                    //     AudioBundle {
-                    //         source: asset_server.load("sfx/enemy_death.ogg"),
-                    //         ..default()
-                    //     },
-                    //     SFX,
-                    // ));
-                } else {
-                    sprite.color = Color::RED;
-                    enemy.health = health;
-                    events.send(ScoreEvent::EnemyHit);
+        let weapon = weapon_query.single();
+        for (entity, mut enemy, mut sprite) in &mut enemies {
+            for event in events.read() {
+                let event_entity = match event {
+                    CollisionEvent::WithEnemy(e) => e,
+                    _ => continue,
+                };
+                if event_entity != &entity {
+                    continue;
                 }
+                info!("here");
+            }
+            // match events.read().find(|event| {
+            //     if let CollisionEvent::WithEnemy(e) = event {
+            //         e == &entity
+            //     } else {
+            //         false
+            //     }
+            // }) {
+            //     Some(_) => {
+            //         info!("enemy hit");
+            //         sprite.color = Color::WHITE;
+            //         let health = enemy.health - weapon.damage_amount * weapon.damage_scale;
+            //         if health <= 0. {
+            //             commands.get_entity(entity).unwrap().despawn();
+            //             score_events.send(ScoreEvent::Scored(enemy.score as u32));
+            //             sfx.play(asset_server.load("sfx/enemy_death.ogg")).with_volume(0.2);
+            //         } else {
+            //             sprite.color = Color::RED;
+            //             enemy.health = health;
+            //             score_events.send(ScoreEvent::EnemyHit);
+            //         }
+            //     }
+            //     None => {}
+            // }
+            // sprite.color = Color::WHITE;
+            // let health = enemy.health - weapon.damage_amount * weapon.damage_scale;
+            // if health <= 0. {
+            //     commands.get_entity(entity).unwrap().despawn();
+            //     events.send(ScoreEvent::Scored(enemy.score as u32));
+            //     sfx.play(asset_server.load("sfx/enemy_death.ogg")).with_volume(0.2);
+            // } else {
+            //     sprite.color = Color::RED;
+            //     enemy.health = health;
+            //     events.send(ScoreEvent::EnemyHit);
+            // }
+        }
+    }
+
+    pub fn collide_with_player(
+        mut commands: Commands,
+        enemies: Query<(Entity, &Transform, &EnemySprite), With<Enemy>>,
+        player: Query<&Transform, With<Pawn>>,
+        mut events: EventWriter<CollisionEvent>,
+    ) {
+        let player_transform = player.single();
+        let player_aabb = Aabb2d::new(
+            player_transform.translation.truncate(),
+            Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * player_transform.scale.truncate(),
+        );
+        for (entity, transform, sprite) in &mut enemies.iter() {
+            let enemy_aabb = Aabb2d::new(transform.translation.truncate(),
+                Vec2::new(sprite.width, sprite.height) * transform.scale.truncate(),
+            );
+            let collision = player_aabb.intersects(&enemy_aabb);
+            if collision {
+                commands.get_entity(entity).unwrap().despawn();
+                events.send(CollisionEvent::WithEnemy(entity));
             }
         }
     }

@@ -1,5 +1,9 @@
-use crate::{components::*, SoundFX};
-use bevy::prelude::*;
+use crate::{components::*, CollisionEvent, SoundFX, SPRITE_HEIGHT, SPRITE_WIDTH};
+use bevy::math::bounding::IntersectsVolume;
+use bevy::{
+    math::bounding::{Aabb2d, BoundingCircle},
+    prelude::*,
+};
 use bevy_kira_audio::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
@@ -62,31 +66,21 @@ impl WeaponBundle {
         transform.translation.z = 0.;
         transform.scale = Vec3::splat(4.);
 
-        commands
-            .spawn(WeaponBundle {
-                sprite: SpriteSheetBundle {
-                    texture,
-                    atlas: TextureAtlas {
-                        layout: texture_atlas_layout,
-                        index: animation_indices.first,
-                    },
-                    transform,
-                    ..default()
+        commands.spawn(WeaponBundle {
+            sprite: SpriteSheetBundle {
+                texture,
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
                 },
-                animation_indices,
-                animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-                weapon: WEAPON_01,
-            });
-            sfx.play(asset_server.load("sfx/woosh2.ogg")).looped();
-            // .with_children(|parent| {
-            //     parent.spawn((
-            //         AudioBundle {
-            //             source: asset_server.load("sfx/woosh2.ogg"),
-            //             settings: PlaybackSettings::LOOP,
-            //         },
-            //         SFX,
-            //     ));
-            // });
+                transform,
+                ..default()
+            },
+            animation_indices,
+            animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            weapon: WEAPON_01,
+        });
+        sfx.play(asset_server.load("sfx/woosh2.ogg")).looped();
     }
 
     pub fn move_weapon(
@@ -102,6 +96,35 @@ impl WeaponBundle {
     pub fn cleanup_sprite(mut commands: Commands, mut query: Query<Entity, With<Weapon>>) {
         for entity in &mut query {
             commands.entity(entity).despawn();
+        }
+    }
+
+    pub fn collide_enemies(
+        mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
+        mut enemies: Query<(Entity, &Transform, &mut Sprite), Without<Pawn>>,
+        time: Res<Time>,
+        mut events: EventWriter<CollisionEvent>,
+    ) {
+        let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
+        let weapon_circle = BoundingCircle::new(
+            weapon_transform.translation.truncate(),
+            weapon_transform.scale.x * SPRITE_WIDTH as f32,
+        );
+        for (entity, &transform, mut sprite) in &mut enemies {
+            sprite.color = Color::WHITE;
+            let enemy_rect = Rect::from_center_size(
+                transform.translation.truncate(),
+                Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
+            );
+            let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
+            let collision = weapon_circle.intersects(&enemy_aabb);
+            if collision
+                && weapon_timer.0.tick(time.delta()).just_finished()
+                && weapon_atlas.index <= weapon.damage_frame_end
+                && weapon_atlas.index >= weapon.damage_frame_start
+            {
+                events.send(CollisionEvent::WithWeapon(entity));
+            }
         }
     }
 }

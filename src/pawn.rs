@@ -1,10 +1,9 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
-use crate::{constants::*, MovementEvent};
+use crate::{constants::*, CollisionEvent, MovementEvent};
 use crate::enemy::EnemySprite;
 use crate::weapon::Weapon;
 use crate::AppState;
 use crate::{ScoreEvent, Scoreboard};
-use bevy::input::keyboard::KeyCode;
 use bevy::math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 
@@ -113,47 +112,6 @@ impl PawnBundle {
         }
     }
 
-    pub fn collisions(
-        mut player_query: Query<(&Transform, &mut Pawn), Without<Weapon>>,
-        enemy_query: Query<(&EnemySprite, &Transform), With<Enemy>>,
-        mut gizmos: Gizmos,
-        mut state: ResMut<NextState<AppState>>,
-    ) {
-        let (player_transform, mut player_pawn) = player_query.single_mut();
-        let translation = player_transform.translation.truncate();
-        let size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32);
-
-        let player_bb = Aabb2d::new(translation, size);
-        if DRAW_GIZMOS {
-            gizmos.rect_2d(
-                player_bb.center(),
-                0.,
-                player_bb.half_size() * 2.,
-                Color::WHITE,
-            );
-        }
-
-        for (sprite, transform) in &mut enemy_query.iter() {
-            let translation = transform.translation.truncate();
-            let size = Vec2::new(sprite.width, sprite.height);
-
-            let enemy_bb = Aabb2d::new(translation, size);
-            if DRAW_GIZMOS {
-                gizmos.rect_2d(enemy_bb.center(), 0., enemy_bb.half_size() * 2., Color::RED);
-            }
-
-            if enemy_bb.intersects(&player_bb) {
-                let new_health = std::cmp::max(0, player_pawn.health.round() as isize - 1);
-
-                if new_health == 0 {
-                    state.set(AppState::GameOver);
-                }
-
-                player_pawn.health = new_health as f32;
-            }
-        }
-    }
-
     pub fn update_score(mut score: ResMut<Scoreboard>, mut events: EventReader<ScoreEvent>) {
         for event in events.read() {
             match event {
@@ -171,6 +129,28 @@ impl PawnBundle {
     pub fn cleanup_sprite(mut commands: Commands, mut query: Query<Entity, With<Pawn>>) {
         for entity in &mut query {
             commands.entity(entity).despawn();
+        }
+    }
+
+    pub fn collide_enemies(
+        mut events: EventReader<CollisionEvent>,
+        mut player_query: Query<&mut Pawn, Without<Enemy>>,
+        mut state: ResMut<NextState<AppState>>,
+    ) {
+        let mut player = player_query.single_mut();
+        let mut new_health = player.health.round() as isize;
+        for event in events.read() {
+            match event {
+                CollisionEvent::WithEnemy(_) => {
+                    new_health -= 1;
+                },
+                _ => {}
+            }
+        }
+        if new_health <= 0 {
+            state.set(AppState::GameOver);
+        } else {
+            player.health = new_health as f32;
         }
     }
 }

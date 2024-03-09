@@ -9,12 +9,12 @@ mod weapon;
 use std::time::Duration;
 
 use bevy::{
-    asset::AssetMetaCheck, audio, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*, render::{
+    asset::AssetMetaCheck, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*, render::{
         camera::RenderTarget,
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-    }, scene::ron::de, window::{Window, WindowTheme}
+    }, window::{Window, WindowTheme}
 };
 use bevy_ecs_tilemap::prelude::*;
 use bevy_kira_audio::prelude::*;
@@ -62,9 +62,15 @@ pub enum ScoreEvent {
     EnemyHit,
 }
 
-#[derive(Event, Debug)]
+#[derive(Event)]
 pub enum MovementEvent {
     Move(Vec2),
+}
+
+#[derive(Event)]
+pub enum CollisionEvent {
+    WithWeapon(Entity),
+    WithEnemy(Entity),
 }
 
 fn main() {
@@ -79,6 +85,7 @@ fn main() {
         .add_event::<ScoreEvent>()
         .add_event::<MenuEvent>()
         .add_event::<MovementEvent>()
+        .add_event::<CollisionEvent>()
         .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
@@ -132,11 +139,14 @@ fn main() {
         .add_systems(
             FixedUpdate,
             ((
-                PawnBundle::collisions,
+                // PawnBundle::collisions,
+                PawnBundle::collide_enemies,
                 PawnBundle::move_pawn,
                 WeaponBundle::move_weapon.after(PawnBundle::move_pawn),
+                WeaponBundle::collide_enemies.after(WeaponBundle::move_weapon),
                 EnemyBundle::move_enemies,
-                EnemyBundle::update_enemies,
+                EnemyBundle::collide_with_weapon,
+                EnemyBundle::collide_with_player,
                 EnemyBundle::spawn_enemies,
             )
                 .run_if(in_state(AppState::InGame)),),
@@ -164,16 +174,16 @@ fn movement(
     mut movement_events: EventWriter<MovementEvent>,
 ) {
     let mut movement = Vec2::ZERO;
-    if keyboard_input.pressed(KeyCode::KeyW) {
+    if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
         movement.y += 1.0;
     }
-    if keyboard_input.pressed(KeyCode::KeyS) {
+    if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
         movement.y -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::KeyA) {
+    if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
         movement.x -= 1.0;
     }
-    if keyboard_input.pressed(KeyCode::KeyD) {
+    if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
         movement.x += 1.0;
     }
     movement_events.send(MovementEvent::Move(movement));
