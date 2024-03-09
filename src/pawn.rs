@@ -1,10 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
-use crate::enemy::EnemySprite;
-use crate::weapon::Weapon;
 use crate::AppState;
 use crate::{constants::*, CollisionEvent, MovementEvent};
 use crate::{ScoreEvent, Scoreboard};
-use bevy::math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };

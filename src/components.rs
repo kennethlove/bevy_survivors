@@ -44,9 +44,3 @@ pub struct Kills;
 
 #[derive(Component)]
 pub struct PlayerHealth;
-
-#[derive(Component)]
-pub struct BackgroundMusic;
-
-#[derive(Component)]
-pub struct SFX;

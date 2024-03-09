@@ -1,10 +1,9 @@
 use crate::components::*;
 use crate::constants::*;
-use crate::weapon::Weapon;
+use crate::Attack;
 use crate::CollisionEvent;
 use crate::{ScoreEvent, Scoreboard, SoundFX};
-use bevy::math::bounding::BoundingVolume;
-use bevy::math::bounding::{Aabb2d, BoundingCircle, IntersectsVolume};
+use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
@@ -218,14 +217,12 @@ impl EnemyBundle {
     pub fn collide_with_weapon(
         mut commands: Commands,
         mut enemies: Query<(Entity, &mut EnemySprite, &mut Sprite), With<Enemy>>,
-        weapon_query: Query<&Weapon>,
         mut events: EventReader<CollisionEvent>,
         mut score_events: EventWriter<ScoreEvent>,
         asset_server: Res<AssetServer>,
         sfx: Res<AudioChannel<SoundFX>>,
+        mut attack: Res<Attack>,
     ) {
-        let weapon = weapon_query.single();
-
         for event in events.read() {
             if let CollisionEvent::WeaponHitsEnemy(event_entity) = event {
                 let event_entity_id = commands.get_entity(*event_entity).unwrap().id();
@@ -233,7 +230,8 @@ impl EnemyBundle {
                     let entity_id = commands.get_entity(entity).unwrap().id();
                     if entity_id == event_entity_id {
                         sprite.color = Color::WHITE;
-                        let health = enemy.health - weapon.damage_amount * weapon.damage_scale;
+                        let health =
+                            enemy.health - (attack.damage_amount * attack.damage_scale) as f32;
                         if health <= 0. {
                             commands.get_entity(*event_entity).unwrap().despawn();
                             score_events.send(ScoreEvent::Scored(enemy.score as u32));

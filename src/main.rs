@@ -54,6 +54,12 @@ pub struct BackgroundMusic;
 #[derive(Resource)]
 pub struct SoundFX;
 
+#[derive(Resource)]
+pub struct Attack {
+    damage_amount: usize,
+    damage_scale: usize,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 struct HighScore {
     score: u32,
@@ -82,6 +88,10 @@ fn main() {
         .insert_resource(AssetMetaCheck::Never)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Scoreboard { score: 0, kills: 0 })
+        .insert_resource(Attack {
+            damage_amount: 50,
+            damage_scale: 1,
+        })
         .insert_resource(PkvStore::new("kennethlove", "Survivors"))
         .init_state::<AppState>()
         .add_audio_channel::<BackgroundMusic>()
@@ -172,7 +182,6 @@ fn main() {
                     .run_if(in_state(AppState::InGame)),
             ),
         )
-        // .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
 
