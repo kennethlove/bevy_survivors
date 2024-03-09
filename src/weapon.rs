@@ -1,5 +1,5 @@
 use crate::{components::*, CollisionEvent, SoundFX, SPRITE_HEIGHT, SPRITE_WIDTH};
-use bevy::math::bounding::IntersectsVolume;
+use bevy::math::bounding::{BoundingVolume, IntersectsVolume};
 use bevy::{
     math::bounding::{Aabb2d, BoundingCircle},
     prelude::*,
@@ -101,29 +101,31 @@ impl WeaponBundle {
 
     pub fn collide_enemies(
         mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-        mut enemies: Query<(Entity, &Transform, &mut Sprite), Without<Pawn>>,
+        mut enemies: Query<(Entity, &Transform, &mut Sprite), With<Enemy>>,
         time: Res<Time>,
         mut events: EventWriter<CollisionEvent>,
+        mut gizmos: Gizmos,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
-        let weapon_circle = BoundingCircle::new(
-            weapon_transform.translation.truncate(),
-            weapon_transform.scale.x * SPRITE_WIDTH as f32,
-        );
+        let weapon_radius = weapon_transform.scale.x * SPRITE_WIDTH as f32;
+        let weapon_circle =
+            BoundingCircle::new(weapon_transform.translation.truncate(), weapon_radius);
+        gizmos.circle_2d(weapon_circle.center(), weapon_circle.radius(), Color::BLUE);
         for (entity, &transform, mut sprite) in &mut enemies {
             sprite.color = Color::WHITE;
             let enemy_rect = Rect::from_center_size(
                 transform.translation.truncate(),
                 Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
             );
-            let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
+            let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.half_size());
             let collision = weapon_circle.intersects(&enemy_aabb);
             if collision
                 && weapon_timer.0.tick(time.delta()).just_finished()
                 && weapon_atlas.index <= weapon.damage_frame_end
                 && weapon_atlas.index >= weapon.damage_frame_start
             {
-                events.send(CollisionEvent::WithWeapon(entity));
+                info!("Weapon hits enemy, {:?}", entity);
+                events.send(CollisionEvent::WeaponHitsEnemy(entity));
             }
         }
     }

@@ -1,8 +1,8 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
-use crate::{constants::*, CollisionEvent, MovementEvent};
 use crate::enemy::EnemySprite;
 use crate::weapon::Weapon;
 use crate::AppState;
+use crate::{constants::*, CollisionEvent, MovementEvent};
 use crate::{ScoreEvent, Scoreboard};
 use bevy::math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
@@ -99,8 +99,8 @@ impl PawnBundle {
                     new_animation_indices = RUN_ANIMATION;
                 }
                 if direction != &Vec2::ZERO {
-                    let new_translation =
-                        transform.translation.truncate() + direction.normalize() * speed * time.delta_seconds();
+                    let new_translation = transform.translation.truncate()
+                        + direction.normalize() * speed * time.delta_seconds();
                     transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
                 }
             }
@@ -140,11 +140,8 @@ impl PawnBundle {
         let mut player = player_query.single_mut();
         let mut new_health = player.health.round() as isize;
         for event in events.read() {
-            match event {
-                CollisionEvent::WithEnemy(_) => {
-                    new_health -= 1;
-                },
-                _ => {}
+            if let CollisionEvent::EnemyHitsPawn(_) = event {
+                new_health -= 1;
             }
         }
         if new_health <= 0 {
