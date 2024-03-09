@@ -84,25 +84,24 @@ impl PawnBundle {
         >,
     ) {
         let (mut transform, mut animation_indices, mut atlas, mut sprite) = query.single_mut();
-        let mut new_animation_indices = IDLE_ANIMATION;
+        let mut new_animation_indices;
         for event in movement_events.read() {
-            if let MovementEvent::Move(direction) = event {
-                let speed = PAWN_SPEED;
-                if direction == &Vec2::ZERO {
-                    new_animation_indices = IDLE_ANIMATION;
-                } else {
-                    if direction.x < 0. {
-                        sprite.flip_x = true;
-                    } else if direction.x > 0. {
-                        sprite.flip_x = false;
-                    }
-                    new_animation_indices = RUN_ANIMATION;
+            let MovementEvent::Move(direction) = event;
+            let speed = PAWN_SPEED;
+            if direction == &Vec2::ZERO {
+                new_animation_indices = IDLE_ANIMATION;
+            } else {
+                if direction.x < 0. {
+                    sprite.flip_x = true;
+                } else if direction.x > 0. {
+                    sprite.flip_x = false;
                 }
-                if direction != &Vec2::ZERO {
-                    let new_translation = transform.translation.truncate()
-                        + direction.normalize() * speed * time.delta_seconds();
-                    transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
-                }
+                new_animation_indices = RUN_ANIMATION;
+            }
+            if direction != &Vec2::ZERO {
+                let new_translation = transform.translation.truncate()
+                    + direction.normalize() * speed * time.delta_seconds();
+                transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
             }
             animation_indices.first = new_animation_indices.first;
             animation_indices.last = new_animation_indices.last;

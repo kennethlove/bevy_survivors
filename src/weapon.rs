@@ -104,13 +104,11 @@ impl WeaponBundle {
         mut enemies: Query<(Entity, &Transform, &mut Sprite), With<Enemy>>,
         time: Res<Time>,
         mut events: EventWriter<CollisionEvent>,
-        mut gizmos: Gizmos,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
         let weapon_radius = weapon_transform.scale.x * SPRITE_WIDTH as f32;
         let weapon_circle =
             BoundingCircle::new(weapon_transform.translation.truncate(), weapon_radius);
-        gizmos.circle_2d(weapon_circle.center(), weapon_circle.radius(), Color::BLUE);
         for (entity, &transform, mut sprite) in &mut enemies {
             sprite.color = Color::WHITE;
             let enemy_rect = Rect::from_center_size(
@@ -124,7 +122,6 @@ impl WeaponBundle {
                 && weapon_atlas.index <= weapon.damage_frame_end
                 && weapon_atlas.index >= weapon.damage_frame_start
             {
-                info!("Weapon hits enemy, {:?}", entity);
                 events.send(CollisionEvent::WeaponHitsEnemy(entity));
             }
         }

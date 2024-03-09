@@ -217,7 +217,7 @@ impl EnemyBundle {
 
     pub fn collide_with_weapon(
         mut commands: Commands,
-        mut enemies: Query<(&mut EnemySprite, &mut Sprite), With<Enemy>>,
+        mut enemies: Query<(Entity, &mut EnemySprite, &mut Sprite), With<Enemy>>,
         weapon_query: Query<&Weapon>,
         mut events: EventReader<CollisionEvent>,
         mut score_events: EventWriter<ScoreEvent>,
@@ -225,24 +225,29 @@ impl EnemyBundle {
         sfx: Res<AudioChannel<SoundFX>>,
     ) {
         let weapon = weapon_query.single();
-        for (mut enemy, mut sprite) in &mut enemies {
-            for event in events.read() {
-                if let CollisionEvent::WeaponHitsEnemy(event_entity) = event {
-                    sprite.color = Color::WHITE;
-                    let health = enemy.health - weapon.damage_amount * weapon.damage_scale;
-                    if health <= 0. {
-                        commands.get_entity(*event_entity).unwrap().despawn();
-                        score_events.send(ScoreEvent::Scored(enemy.score as u32));
-                        sfx.play(asset_server.load("sfx/enemy_death.ogg"))
-                            .with_volume(0.2);
-                    } else {
-                        sprite.color = Color::RED;
-                        enemy.health = health;
-                        score_events.send(ScoreEvent::EnemyHit);
+
+        for event in events.read() {
+            if let CollisionEvent::WeaponHitsEnemy(event_entity) = event {
+                let event_entity_id = commands.get_entity(*event_entity).unwrap().id();
+                for (entity, mut enemy, mut sprite) in &mut enemies {
+                    let entity_id = commands.get_entity(entity).unwrap().id();
+                    if entity_id == event_entity_id {
+                        sprite.color = Color::WHITE;
+                        let health = enemy.health - weapon.damage_amount * weapon.damage_scale;
+                        if health <= 0. {
+                            commands.get_entity(*event_entity).unwrap().despawn();
+                            score_events.send(ScoreEvent::Scored(enemy.score as u32));
+                            sfx.play(asset_server.load("sfx/enemy_death.ogg"))
+                                .with_volume(0.2);
+                        } else {
+                            sprite.color = Color::RED;
+                            enemy.health = health;
+                            score_events.send(ScoreEvent::EnemyHit);
+                        }
                     }
-                } else {
-                    continue;
                 }
+            } else {
+                continue;
             }
         }
     }
@@ -252,7 +257,6 @@ impl EnemyBundle {
         enemies: Query<(Entity, &Transform, &EnemySprite), With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
         mut events: EventWriter<CollisionEvent>,
-        mut gizmos: Gizmos,
     ) {
         let player_transform = player.single();
         let player_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32)
@@ -260,10 +264,7 @@ impl EnemyBundle {
         let player_aabb = Aabb2d::new(player_transform.translation.truncate(), player_size / 2.);
         for (entity, transform, sprite) in &mut enemies.iter() {
             let enemy_size = Vec2::new(sprite.width, sprite.height) * transform.scale.truncate();
-            let enemy_aabb = Aabb2d::new(
-                transform.translation.truncate(),
-                Vec2::new(sprite.width, sprite.height) * transform.scale.truncate(),
-            );
+            let enemy_aabb = Aabb2d::new(transform.translation.truncate(), enemy_size);
             let collision = player_aabb.intersects(&enemy_aabb);
             if collision {
                 commands.get_entity(entity).unwrap().despawn();
