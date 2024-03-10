@@ -214,14 +214,14 @@ impl EnemyBundle {
         }
     }
 
-    pub fn collide_with_weapon(
+    pub fn collided_with_weapon(
         mut commands: Commands,
         mut enemies: Query<(Entity, &mut EnemySprite, &mut Sprite), With<Enemy>>,
         mut events: EventReader<CollisionEvent>,
         mut score_events: EventWriter<ScoreEvent>,
         asset_server: Res<AssetServer>,
         sfx: Res<AudioChannel<SoundFX>>,
-        mut attack: Res<Attack>,
+        attack: Res<Attack>,
     ) {
         for event in events.read() {
             if let CollisionEvent::WeaponHitsEnemy(event_entity) = event {
@@ -229,7 +229,6 @@ impl EnemyBundle {
                 for (entity, mut enemy, mut sprite) in &mut enemies {
                     let entity_id = commands.get_entity(entity).unwrap().id();
                     if entity_id == event_entity_id {
-                        sprite.color = Color::WHITE;
                         let health =
                             enemy.health - (attack.damage_amount * attack.damage_scale) as f32;
                         if health <= 0. {
@@ -250,7 +249,7 @@ impl EnemyBundle {
         }
     }
 
-    pub fn collide_with_player(
+    pub fn collided_with_player(
         mut commands: Commands,
         enemies: Query<(Entity, &Transform, &EnemySprite), With<Enemy>>,
         player: Query<&Transform, With<Pawn>>,
