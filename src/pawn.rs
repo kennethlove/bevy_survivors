@@ -152,11 +152,12 @@ pub fn cleanup_sprite(mut commands: Commands, mut query: Query<Entity, With<Pawn
 
 pub fn collide_enemies(
     mut events: EventReader<CollisionEvent>,
-    mut player_query: Query<&mut Pawn, Without<Enemy>>,
+    mut player_query: Query<(&mut Pawn, &mut Sprite), Without<Enemy>>,
     mut state: ResMut<NextState<AppState>>,
 ) {
-    let mut player = player_query.single_mut();
+    let (mut player, mut sprite) = player_query.single_mut();
     let mut new_health = player.health.round() as isize;
+
     for event in events.read() {
         match event {
             CollisionEvent::EnemyHitsPawn(_) => {
@@ -168,6 +169,11 @@ pub fn collide_enemies(
     if new_health <= 0 {
         state.set(AppState::GameOver);
     } else {
+        if new_health < player.health.round() as isize {
+            sprite.color = Color::RED;
+        } else {
+            sprite.color = Color::WHITE;
+        }
         player.health = new_health as f32;
     }
 }
