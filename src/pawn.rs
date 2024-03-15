@@ -8,11 +8,19 @@ const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 1, last: 7 };
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
+#[derive(Resource)]
+pub struct Attack {
+    pub damage_amount: f32,
+    pub damage_scale: f32,
+}
+
 pub struct PawnPlugin;
 
 impl Plugin for PawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::InGame), setup_sprite)
+        app
+            .insert_resource(Attack { damage_amount: 10., damage_scale: 1. })
+            .add_systems(OnEnter(AppState::InGame), setup_sprite)
             .add_systems(OnExit(AppState::InGame), cleanup_sprite)
             .add_systems(Update, update_score.run_if(in_state(AppState::InGame)))
             .add_systems(

@@ -58,7 +58,7 @@ pub fn setup_hp(
 
     let text_style = TextStyle {
         color: Color::WHITE,
-        font_size: 8.0,
+        font_size: 16.0,
         font,
     };
 

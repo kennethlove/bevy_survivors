@@ -28,13 +28,6 @@ use serde::{Deserialize, Serialize};
 use ui::*;
 use weapon::WeaponPlugin;
 
-#[derive(Resource)]
-pub struct Attack {
-    damage_amount: f32,
-    damage_scale: f32,
-}
-
-
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
     #[default]
@@ -85,10 +78,6 @@ fn main() {
         .insert_resource(AssetMetaCheck::Never)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Scoreboard { score: 0, kills: 0 })
-        .insert_resource(Attack {
-            damage_amount: 1.0,
-            damage_scale: 1.0,
-        })
         .insert_resource(PkvStore::new("kennethlove", "Survivors"))
         .init_state::<AppState>()
         .add_audio_channel::<BackgroundMusic>()
@@ -128,19 +117,8 @@ fn main() {
             (cleanup_title, cleanup_main_menu),
         )
         .add_systems(OnExit(AppState::InGame), cleanup_ui)
-        .add_systems(
-            OnEnter(AppState::InGame),
-            (
-                setup_ui,
-                setup_hp,
-            ),
-        )
-        .add_systems(
-            OnExit(AppState::InGame),
-            (
-                cleanup_hp,
-            ),
-        )
+        .add_systems(OnEnter(AppState::InGame), (setup_ui, setup_hp))
+        .add_systems(OnExit(AppState::InGame), cleanup_hp)
         .add_systems(OnEnter(AppState::GameOver), setup_game_over)
         .add_systems(OnExit(AppState::GameOver), (cleanup_game_over, reset))
         .add_systems(Update, (

@@ -2,7 +2,7 @@ use crate::components::*;
 use crate::constants::*;
 use crate::CollisionEvent;
 use crate::AppState;
-use crate::Attack;
+use crate::pawn::Attack;
 use crate::{ScoreEvent, Scoreboard, SoundFX};
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
@@ -241,7 +241,11 @@ pub fn collided_with_weapon(
 ) {
     for event in events.read() {
         if let CollisionEvent::WeaponHitsEnemy(event_entity) = event {
-            let event_entity_id = commands.get_entity(*event_entity).unwrap().id();
+            let entity = commands.get_entity(*event_entity);
+            if !entity.is_some() {
+                continue;
+            }
+            let event_entity_id = entity.unwrap().id();
             for (entity, mut enemy, mut sprite) in &mut enemies {
                 let entity_id = commands.get_entity(entity).unwrap().id();
                 if entity_id == event_entity_id {

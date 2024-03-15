@@ -111,6 +111,10 @@ pub fn collide_enemies(
     mut events: EventWriter<CollisionEvent>,
     mut gizmos: Gizmos,
 ) {
+    if weapon_query.is_empty() {
+        return;
+    }
+
     let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
     let weapon_radius = weapon_transform.scale.x * (SPRITE_WIDTH as f32 * 2.);
     let weapon_circle =
