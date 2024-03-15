@@ -1,10 +1,7 @@
 use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
-use crate::{constants::*, CollisionEvent, MovementEvent};
-use crate::enemy::EnemySprite;
-use crate::weapon::Weapon;
 use crate::AppState;
+use crate::{constants::*, CollisionEvent, MovementEvent};
 use crate::{ScoreEvent, Scoreboard};
-use bevy::math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
@@ -15,11 +12,13 @@ pub struct PawnPlugin;
 
 impl Plugin for PawnPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(OnEnter(AppState::InGame), setup_sprite)
+        app.add_systems(OnEnter(AppState::InGame), setup_sprite)
             .add_systems(OnExit(AppState::InGame), cleanup_sprite)
             .add_systems(Update, update_score.run_if(in_state(AppState::InGame)))
-            .add_systems(FixedUpdate, (collide_enemies, move_pawn).run_if(in_state(AppState::InGame)));
+            .add_systems(
+                FixedUpdate,
+                (collide_enemies, move_pawn).run_if(in_state(AppState::InGame)),
+            );
     }
 }
 
@@ -110,8 +109,8 @@ fn move_pawn(
                 new_animation_indices = RUN_ANIMATION;
             }
             if direction != &Vec2::ZERO {
-                let new_translation =
-                    transform.translation.truncate() + direction.normalize() * speed * time.delta_seconds();
+                let new_translation = transform.translation.truncate()
+                    + direction.normalize() * speed * time.delta_seconds();
                 transform.translation = Vec3::new(new_translation.x, new_translation.y, 2.);
             }
         }
@@ -122,7 +121,6 @@ fn move_pawn(
         }
     }
 }
-
 
 pub fn update_score(mut score: ResMut<Scoreboard>, mut events: EventReader<ScoreEvent>) {
     for event in events.read() {
@@ -155,7 +153,7 @@ pub fn collide_enemies(
         match event {
             CollisionEvent::WithEnemy(_) => {
                 new_health -= 1;
-            },
+            }
             _ => {}
         }
     }

@@ -8,19 +8,12 @@ use bevy_kira_audio::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
-const WEAPON_01: Weapon = Weapon {
-    damage_amount: 50.,
-    damage_frame_end: 4,
-    damage_frame_start: 0,
-    damage_scale: 1.,
-};
-
-#[derive(Component)]
+#[derive(Clone, Component)]
 pub struct Weapon {
-    pub damage_amount: f32,
+    audio_filename: String,
+    filename: String,
     pub damage_frame_end: usize,
     pub damage_frame_start: usize,
-    pub damage_scale: f32,
 }
 
 #[derive(Bundle)]
@@ -41,10 +34,10 @@ impl Default for WeaponBundle {
             animation_indices: AnimationIndices { first: 0, last: 0 },
             animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             weapon: Weapon {
-                damage_amount: 0.,
+                audio_filename: String::from(""),
+                filename: String::from(""),
                 damage_frame_start: 0,
                 damage_frame_end: 0,
-                damage_scale: 1.,
             },
         }
     }
@@ -57,14 +50,16 @@ impl WeaponBundle {
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
         sfx: Res<AudioChannel<SoundFX>>,
     ) {
-        let texture = asset_server.load("super/03.png");
-        let layout = TextureAtlasLayout::from_grid(Vec2::new(32., 32.), 6, 2, None, None);
+        let weapon = Self::weapon_01();
+        let texture = asset_server.load(&weapon.filename);
+        let layout = TextureAtlasLayout::from_grid(Vec2::new(64., 64.), 8, 3, None, None);
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
-        let animation_indices = AnimationIndices { first: 0, last: 11 };
+        let animation_indices = AnimationIndices { first: 0, last: 23 };
+        let audio = asset_server.load(&weapon.audio_filename);
 
         let mut transform = Transform::from_translation(STARTING_POSITION);
         transform.translation.z = 0.;
-        transform.scale = Vec3::splat(4.);
+        transform.scale = Vec3::splat(2.);
 
         commands.spawn(WeaponBundle {
             sprite: SpriteSheetBundle {
@@ -77,10 +72,10 @@ impl WeaponBundle {
                 ..default()
             },
             animation_indices,
-            animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            weapon: WEAPON_01,
+            animation_timer: AnimationTimer(Timer::from_seconds(0.05, TimerMode::Repeating)),
+            weapon,
         });
-        sfx.play(asset_server.load("sfx/woosh2.ogg")).looped();
+        sfx.play(audio).looped();
     }
 
     pub fn move_weapon(
@@ -101,30 +96,67 @@ impl WeaponBundle {
 
     pub fn collide_enemies(
         mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-        mut enemies: Query<(Entity, &Transform, &mut Sprite), Without<Pawn>>,
+        mut enemies: Query<(Entity, &Transform, &mut Sprite), With<Enemy>>,
         time: Res<Time>,
         mut events: EventWriter<CollisionEvent>,
+        mut gizmos: Gizmos,
     ) {
         let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
-        let weapon_circle = BoundingCircle::new(
-            weapon_transform.translation.truncate(),
-            weapon_transform.scale.x * SPRITE_WIDTH as f32,
-        );
+        let weapon_radius = weapon_transform.scale.x * (SPRITE_WIDTH as f32 * 2.);
+        let weapon_circle =
+            BoundingCircle::new(weapon_transform.translation.truncate(), weapon_radius);
+        gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::RED);
         for (entity, &transform, mut sprite) in &mut enemies {
             sprite.color = Color::WHITE;
             let enemy_rect = Rect::from_center_size(
                 transform.translation.truncate(),
                 Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
             );
-            let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.size());
+            let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.half_size());
             let collision = weapon_circle.intersects(&enemy_aabb);
             if collision
                 && weapon_timer.0.tick(time.delta()).just_finished()
                 && weapon_atlas.index <= weapon.damage_frame_end
                 && weapon_atlas.index >= weapon.damage_frame_start
             {
-                events.send(CollisionEvent::WithWeapon(entity));
+                events.send(CollisionEvent::WeaponHitsEnemy(entity));
             }
+        }
+    }
+
+    fn weapon_01() -> Weapon {
+        Weapon {
+            audio_filename: String::from("sfx/woosh2.ogg"),
+            filename: String::from("magic/241.png"),
+            damage_frame_start: 4,
+            damage_frame_end: 18,
+        }
+    }
+
+    fn weapon_02() -> Weapon {
+        Weapon {
+            audio_filename: String::from("sfx/woosh2.ogg"),
+            filename: String::from("magic/242.png"),
+            damage_frame_start: 0,
+            damage_frame_end: 23,
+        }
+    }
+
+    fn weapon_03() -> Weapon {
+        Weapon {
+            audio_filename: String::from("sfx/woosh2.ogg"),
+            filename: String::from("magic/243.png"),
+            damage_frame_start: 0,
+            damage_frame_end: 23,
+        }
+    }
+
+    fn weapon_04() -> Weapon {
+        Weapon {
+            audio_filename: String::from("sfx/woosh2.ogg"),
+            filename: String::from("magic/244.png"),
+            damage_frame_start: 0,
+            damage_frame_end: 23,
         }
     }
 }
