@@ -21,12 +21,19 @@ use bevy_kira_audio::prelude::*;
 use bevy_pkv::PkvStore;
 use components::*;
 use constants::*;
-use enemy::EnemyBundle;
+use enemy::EnemyPlugin;
 use menu::*;
 use pawn::PawnPlugin;
 use serde::{Deserialize, Serialize};
 use ui::*;
-use weapon::WeaponBundle;
+use weapon::WeaponPlugin;
+
+#[derive(Resource)]
+pub struct Attack {
+    damage_amount: f32,
+    damage_scale: f32,
+}
+
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
 enum AppState {
@@ -69,8 +76,8 @@ pub enum MovementEvent {
 
 #[derive(Event)]
 pub enum CollisionEvent {
-    WithWeapon(Entity),
-    WithEnemy(Entity),
+    WeaponHitsEnemy(Entity),
+    EnemyHitsPawn(Entity),
 }
 
 fn main() {
@@ -78,6 +85,10 @@ fn main() {
         .insert_resource(AssetMetaCheck::Never)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Scoreboard { score: 0, kills: 0 })
+        .insert_resource(Attack {
+            damage_amount: 1.0,
+            damage_scale: 1.0,
+        })
         .insert_resource(PkvStore::new("kennethlove", "Survivors"))
         .init_state::<AppState>()
         .add_audio_channel::<BackgroundMusic>()
@@ -109,7 +120,7 @@ fn main() {
             AudioPlugin,
             TilemapPlugin,
         ))
-        .add_plugins(PawnPlugin)
+        .add_plugins((EnemyPlugin, PawnPlugin, WeaponPlugin))
         .add_systems(Startup, (setup_camera, setup_background, setup_music))
         .add_systems(OnEnter(AppState::MainMenu), (setup_title, setup_main_menu))
         .add_systems(
@@ -120,7 +131,6 @@ fn main() {
         .add_systems(
             OnEnter(AppState::InGame),
             (
-                WeaponBundle::setup_sprite,
                 setup_ui,
                 setup_hp,
             ),
@@ -128,25 +138,11 @@ fn main() {
         .add_systems(
             OnExit(AppState::InGame),
             (
-                WeaponBundle::cleanup_sprite,
-                EnemyBundle::cleanup_sprites,
                 cleanup_hp,
             ),
         )
         .add_systems(OnEnter(AppState::GameOver), setup_game_over)
         .add_systems(OnExit(AppState::GameOver), (cleanup_game_over, reset))
-        .add_systems(
-            FixedUpdate,
-            ((
-                WeaponBundle::move_weapon,
-                WeaponBundle::collide_enemies.after(WeaponBundle::move_weapon),
-                EnemyBundle::move_enemies,
-                EnemyBundle::collide_with_weapon,
-                EnemyBundle::collide_with_player,
-                EnemyBundle::spawn_enemies,
-            )
-                .run_if(in_state(AppState::InGame)),),
-        )
         .add_systems(Update, (
             audio_system,
             main_menu_button_system,

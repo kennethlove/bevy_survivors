@@ -151,7 +151,7 @@ pub fn collide_enemies(
     let mut new_health = player.health.round() as isize;
     for event in events.read() {
         match event {
-            CollisionEvent::WithEnemy(_) => {
+            CollisionEvent::EnemyHitsPawn(_) => {
                 new_health -= 1;
             }
             _ => {}
