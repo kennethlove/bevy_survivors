@@ -39,7 +39,18 @@ pub fn setup_hp(
     asset_server: Res<AssetServer>,
     mut player: Query<(&Transform, &Pawn)>,
 ) {
-    let (location, pawn) = player.single_mut();
+    let mut location: &Transform = &Transform::from_translation(Vec3::new(0., 0., 0.));
+    let mut pawn: &Pawn = &Pawn {
+        health: 1.,
+        speed: 1.,
+    };
+
+    if !player.is_empty() {
+        let pl = player.single_mut();
+        location = pl.0;
+        pawn = pl.1;
+    }
+
     let mut location = *location;
     location.translation.y += 20.;
 
@@ -54,7 +65,7 @@ pub fn setup_hp(
     commands.spawn((
         Text2dBundle {
             text: Text::from_section(pawn.health.to_string(), text_style.clone()),
-            transform: location,
+            transform: location.clone(),
             ..default()
         },
         PlayerHealth,
@@ -65,6 +76,10 @@ pub fn update_hp(
     mut player: Query<(&Transform, &Pawn), Without<PlayerHealth>>,
     mut hp: Query<(&mut Text, &mut Transform), With<PlayerHealth>>,
 ) {
+    if player.is_empty() {
+        return;
+    }
+
     let (location, pawn) = player.single_mut();
     let mut location = *location;
     location.translation.y += 20.;

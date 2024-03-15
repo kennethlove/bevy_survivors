@@ -23,7 +23,7 @@ use components::*;
 use constants::*;
 use enemy::EnemyBundle;
 use menu::*;
-use pawn::PawnBundle;
+use pawn::PawnPlugin;
 use serde::{Deserialize, Serialize};
 use ui::*;
 use weapon::WeaponBundle;
@@ -109,6 +109,7 @@ fn main() {
             AudioPlugin,
             TilemapPlugin,
         ))
+        .add_plugins(PawnPlugin)
         .add_systems(Startup, (setup_camera, setup_background, setup_music))
         .add_systems(OnEnter(AppState::MainMenu), (setup_title, setup_main_menu))
         .add_systems(
@@ -119,17 +120,15 @@ fn main() {
         .add_systems(
             OnEnter(AppState::InGame),
             (
-                PawnBundle::setup_sprite,
-                WeaponBundle::setup_sprite.after(PawnBundle::setup_sprite),
+                WeaponBundle::setup_sprite,
                 setup_ui,
-                setup_hp.after(PawnBundle::setup_sprite),
+                setup_hp,
             ),
         )
         .add_systems(
             OnExit(AppState::InGame),
             (
-                PawnBundle::cleanup_sprite,
-                WeaponBundle::cleanup_sprite.after(PawnBundle::cleanup_sprite),
+                WeaponBundle::cleanup_sprite,
                 EnemyBundle::cleanup_sprites,
                 cleanup_hp,
             ),
@@ -139,10 +138,7 @@ fn main() {
         .add_systems(
             FixedUpdate,
             ((
-                // PawnBundle::collisions,
-                PawnBundle::collide_enemies,
-                PawnBundle::move_pawn,
-                WeaponBundle::move_weapon.after(PawnBundle::move_pawn),
+                WeaponBundle::move_weapon,
                 WeaponBundle::collide_enemies.after(WeaponBundle::move_weapon),
                 EnemyBundle::move_enemies,
                 EnemyBundle::collide_with_weapon,
@@ -158,7 +154,6 @@ fn main() {
                 movement,
                 move_camera,
                 animate_sprites,
-                PawnBundle::update_score,
                 update_ui,
                 update_hp,
                 pause,
