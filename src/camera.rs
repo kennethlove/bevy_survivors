@@ -71,7 +71,7 @@ fn move_camera(
     mut query: Query<(&mut Transform, &MainCamera), Without<Pawn>>,
     pawn_query: Query<&Transform, With<Pawn>>,
 ) {
-    if pawn_query.iter().count() == 0 {
+    if pawn_query.is_empty() || query.is_empty() {
         return;
     }
     let mut camera = query.single_mut();
