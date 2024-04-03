@@ -1,4 +1,10 @@
-use crate::{components::*, constants::*, AppState, CollisionEvent, SoundFX};
+use crate::{
+    animation::{AnimationIndices, AnimationTimer},
+    audio::SoundFX,
+    components::*,
+    constants::*,
+    AppState, CollisionEvent,
+};
 use bevy::math::bounding::IntersectsVolume;
 use bevy::{
     math::bounding::{Aabb2d, BoundingCircle},

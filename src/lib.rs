@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+pub mod animation;
+pub mod audio;
+pub mod background;
+pub mod camera;
 pub mod components;
 pub mod constants;
 pub mod enemy;
@@ -25,12 +29,6 @@ pub struct Scoreboard {
     pub kills: u32,
 }
 
-#[derive(Resource)]
-pub struct BackgroundMusic;
-
-#[derive(Resource)]
-pub struct SoundFX;
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct HighScore {
     pub score: u32,
@@ -41,11 +39,6 @@ pub struct HighScore {
 pub enum ScoreEvent {
     Scored(u32),
     EnemyHit,
-}
-
-#[derive(Event)]
-pub enum MovementEvent {
-    Move(Vec2),
 }
 
 #[derive(Event)]

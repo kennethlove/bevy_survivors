@@ -1,9 +1,11 @@
+use crate::animation::{AnimationIndices, AnimationTimer};
+use crate::audio::SoundFX;
 use crate::components::*;
 use crate::constants::*;
-use crate::CollisionEvent;
-use crate::AppState;
 use crate::pawn::Attack;
-use crate::{ScoreEvent, Scoreboard, SoundFX};
+use crate::AppState;
+use crate::CollisionEvent;
+use crate::{ScoreEvent, Scoreboard};
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
@@ -15,17 +17,19 @@ pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(FixedUpdate, (
+        app.add_systems(
+            FixedUpdate,
+            (
                 spawn_enemies,
                 move_enemies,
                 collided_with_weapon,
                 collided_with_player,
-            ).run_if(in_state(AppState::InGame)))
-            .add_systems(OnExit(AppState::InGame), cleanup_sprites);
+            )
+                .run_if(in_state(AppState::InGame)),
+        )
+        .add_systems(OnExit(AppState::InGame), cleanup_sprites);
     }
 }
-
 
 #[derive(Component, Clone, Debug)]
 pub struct EnemySprite {
@@ -249,8 +253,7 @@ pub fn collided_with_weapon(
             for (entity, mut enemy, mut sprite) in &mut enemies {
                 let entity_id = commands.get_entity(entity).unwrap().id();
                 if entity_id == event_entity_id {
-                    let health =
-                        enemy.health - (attack.damage_amount * attack.damage_scale) as f32;
+                    let health = enemy.health - (attack.damage_amount * attack.damage_scale) as f32;
                     if health <= 0. {
                         commands.get_entity(*event_entity).unwrap().despawn();
                         score_events.send(ScoreEvent::Scored(enemy.score as u32));
@@ -276,8 +279,8 @@ pub fn collided_with_player(
     mut events: EventWriter<CollisionEvent>,
 ) {
     let player_transform = player.single();
-    let player_size = Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32)
-        * player_transform.scale.truncate();
+    let player_size =
+        Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * player_transform.scale.truncate();
     let player_aabb = Aabb2d::new(player_transform.translation.truncate(), player_size / 2.);
     for (entity, transform, sprite) in &mut enemies.iter() {
         let enemy_size = Vec2::new(sprite.width, sprite.height) * transform.scale.truncate();

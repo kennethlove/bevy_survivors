@@ -1,4 +1,5 @@
-use crate::components::{AnimationIndices, AnimationTimer, Enemy, Pawn};
+use crate::animation::{AnimationIndices, AnimationTimer};
+use crate::components::{Enemy, Pawn};
 use crate::AppState;
 use crate::{constants::*, CollisionEvent, MovementEvent};
 use crate::{ScoreEvent, Scoreboard};
@@ -14,19 +15,30 @@ pub struct Attack {
     pub damage_scale: f32,
 }
 
+#[derive(Event)]
+pub enum MovementEvent {
+    Move(Vec2),
+}
+
 pub struct PawnPlugin;
 
 impl Plugin for PawnPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(Attack { damage_amount: 10., damage_scale: 1. })
-            .add_systems(OnEnter(AppState::InGame), setup_sprite)
-            .add_systems(OnExit(AppState::InGame), cleanup_sprite)
-            .add_systems(Update, update_score.run_if(in_state(AppState::InGame)))
-            .add_systems(
-                FixedUpdate,
-                (collide_enemies, move_pawn).run_if(in_state(AppState::InGame)),
-            );
+        app.insert_resource(Attack {
+            damage_amount: 10.,
+            damage_scale: 1.,
+        })
+        .add_event::<MovementEvent>()
+        .add_systems(OnEnter(AppState::InGame), setup_sprite)
+        .add_systems(OnExit(AppState::InGame), cleanup_sprite)
+        .add_systems(
+            Update,
+            (movement, update_score).run_if(in_state(AppState::InGame)),
+        )
+        .add_systems(
+            FixedUpdate,
+            (collide_enemies, move_pawn).run_if(in_state(AppState::InGame)),
+        );
     }
 }
 
@@ -176,4 +188,24 @@ pub fn collide_enemies(
         }
         player.health = new_health as f32;
     }
+}
+
+fn movement(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut movement_events: EventWriter<MovementEvent>,
+) {
+    let mut movement = Vec2::ZERO;
+    if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
+        movement.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
+        movement.y -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
+        movement.x -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
+        movement.x += 1.0;
+    }
+    movement_events.send(MovementEvent::Move(movement));
 }
