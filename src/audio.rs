@@ -37,18 +37,18 @@ fn audio_system(
             AppState::InGame => {
                 instance.set_volume(
                     0.5,
-                    AudioTween::new(Duration::from_secs(2), AudioEasing::Linear),
+                    AudioTween::new(Duration::from_secs(1), AudioEasing::Linear),
                 );
                 sfx.resume()
-                    .fade_in(AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
+                    .fade_in(AudioTween::new(Duration::from_secs(1), AudioEasing::Linear));
             }
             _ => {
                 instance.set_volume(
                     0.1,
-                    AudioTween::new(Duration::from_secs(2), AudioEasing::Linear),
+                    AudioTween::new(Duration::from_secs(1), AudioEasing::Linear),
                 );
                 sfx.pause()
-                    .fade_out(AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
+                    .fade_out(AudioTween::new(Duration::from_secs(1), AudioEasing::Linear));
             }
         }
     }
@@ -59,6 +59,7 @@ fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>, audio: Re
         .play(asset_server.load("music/Arcade.ogg"))
         .with_volume(0.5)
         .looped()
+        .fade_in(AudioTween::new(Duration::from_secs(1), AudioEasing::Linear))
         .handle();
     commands.insert_resource(AudioHandle(handle));
 }

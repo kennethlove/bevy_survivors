@@ -5,8 +5,21 @@ use bevy::{
     window::WindowTheme,
 };
 use bevy_pkv::PkvStore;
+use bevy_rapier2d::prelude::*;
 
-use bevy_survivors::*;
+use bevy_survivors::{AppState, CollisionEvent, ScoreEvent, Scoreboard};
+use bevy_survivors::constants::*;
+use bevy_survivors::{
+    animation::AnimationPlugin,
+    audio::AudioPlugin,
+    background::BackgroundPlugin,
+    camera::CameraPlugin,
+    enemy::EnemyPlugin,
+    menu::MenuPlugin,
+    pawn::PawnPlugin,
+    ui::UIPlugin,
+    weapon::WeaponPlugin,
+};
 
 fn main() {
     App::new()
@@ -37,6 +50,10 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             // FrameTimeDiagnosticsPlugin,
             // LogDiagnosticsPlugin::default(),
+        ))
+        .add_plugins((
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.),
+            RapierDebugRenderPlugin::default(),
         ))
         .add_plugins((
             AnimationPlugin,

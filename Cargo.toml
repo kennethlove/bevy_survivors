@@ -10,7 +10,9 @@ bevy = "0.13"
 bevy_ecs_tilemap = { git = "https://github.com/rparrett/bevy_ecs_tilemap", branch = "bevy13" }
 bevy_kira_audio = { version = "0.19.0", features = ["wav"] }
 bevy_pkv = "0.10.0"
+bevy_rapier2d = "0.25.0"
 fastrand = "2.0.1"
+leafwing-input-manager = "0.13.3"
 serde = { version = "1.0.197", features = ["derive"] }
 
 [profile.dev]
