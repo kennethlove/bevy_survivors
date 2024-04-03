@@ -1,77 +1,26 @@
-mod components;
-mod constants;
-mod enemy;
-mod menu;
-mod pawn;
-mod ui;
-mod weapon;
-
 use std::time::Duration;
 
 use bevy::{
-    asset::AssetMetaCheck, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*, render::{
+    asset::AssetMetaCheck,
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    render::{
         camera::RenderTarget,
         render_resource::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
-    }, window::{Window, WindowTheme}
+    },
+    window::WindowTheme,
 };
 use bevy_ecs_tilemap::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_pkv::PkvStore;
-use components::*;
-use constants::*;
-use enemy::EnemyPlugin;
-use menu::*;
-use pawn::PawnPlugin;
-use serde::{Deserialize, Serialize};
-use ui::*;
-use weapon::WeaponPlugin;
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
-enum AppState {
-    #[default]
-    Setup,
-    MainMenu,
-    OptionMenu,
-    InGame,
-    GameOver,
-}
-
-#[derive(Resource)]
-struct Scoreboard {
-    score: u32,
-    kills: u32,
-}
-
-#[derive(Resource)]
-pub struct BackgroundMusic;
-
-#[derive(Resource)]
-pub struct SoundFX;
-
-#[derive(Serialize, Deserialize, Debug)]
-struct HighScore {
-    score: u32,
-    kills: u32,
-}
-
-#[derive(Event)]
-pub enum ScoreEvent {
-    Scored(u32),
-    EnemyHit,
-}
-
-#[derive(Event)]
-pub enum MovementEvent {
-    Move(Vec2),
-}
-
-#[derive(Event)]
-pub enum CollisionEvent {
-    WeaponHitsEnemy(Entity),
-    EnemyHitsPawn(Entity),
-}
+use bevy_survivors::{
+    components::*, constants::*, enemy::EnemyPlugin, menu::*, pawn::PawnPlugin, ui::*,
+    weapon::WeaponPlugin, AppState, BackgroundMusic, CollisionEvent, MovementEvent, ScoreEvent,
+    Scoreboard, SoundFX,
+};
 
 fn main() {
     App::new()
@@ -121,19 +70,23 @@ fn main() {
         .add_systems(OnExit(AppState::InGame), cleanup_hp)
         .add_systems(OnEnter(AppState::GameOver), setup_game_over)
         .add_systems(OnExit(AppState::GameOver), (cleanup_game_over, reset))
-        .add_systems(Update, (
-            audio_system,
-            main_menu_button_system,
+        .add_systems(
+            Update,
             (
-                movement,
-                move_camera,
-                animate_sprites,
-                update_ui,
-                update_hp,
-                pause,
-                game_over_button_system,
-            ).run_if(in_state(AppState::InGame))
-        ))
+                audio_system,
+                main_menu_button_system,
+                (
+                    movement,
+                    move_camera,
+                    animate_sprites,
+                    update_ui,
+                    update_hp,
+                    pause,
+                    game_over_button_system,
+                )
+                    .run_if(in_state(AppState::InGame)),
+            ),
+        )
         // .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
@@ -327,7 +280,6 @@ fn pause(mut state: ResMut<NextState<AppState>>, keyboard_input: Res<ButtonInput
 #[derive(Resource)]
 struct AudioHandle(Handle<AudioInstance>);
 
-
 fn audio_system(
     state: Res<State<AppState>>,
     mut bg: ResMut<Assets<AudioInstance>>,
@@ -337,12 +289,20 @@ fn audio_system(
     if let Some(instance) = bg.get_mut(&handle.0) {
         match state.get() {
             AppState::InGame => {
-                instance.set_volume(0.5, AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
-                sfx.resume().fade_in(AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
+                instance.set_volume(
+                    0.5,
+                    AudioTween::new(Duration::from_secs(2), AudioEasing::Linear),
+                );
+                sfx.resume()
+                    .fade_in(AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
             }
             _ => {
-                instance.set_volume(0.1, AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
-                sfx.pause().fade_out(AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
+                instance.set_volume(
+                    0.1,
+                    AudioTween::new(Duration::from_secs(2), AudioEasing::Linear),
+                );
+                sfx.pause()
+                    .fade_out(AudioTween::new(Duration::from_secs(2), AudioEasing::Linear));
             }
         }
     }
@@ -350,7 +310,11 @@ fn audio_system(
 
 fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>, audio: Res<Audio>) {
     // background.play(asset_server.load("music/Arcade.ogg")).with_volume(0.5).looped();
-    let handle = audio.play(asset_server.load("music/Arcade.ogg")).with_volume(0.5).looped().handle();
+    let handle = audio
+        .play(asset_server.load("music/Arcade.ogg"))
+        .with_volume(0.5)
+        .looped()
+        .handle();
     commands.insert_resource(AudioHandle(handle));
     // commands.spawn((
     //     AudioBundle {

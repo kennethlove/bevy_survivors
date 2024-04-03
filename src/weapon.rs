@@ -1,4 +1,4 @@
-use crate::{AppState, components::*, CollisionEvent, SoundFX, SPRITE_HEIGHT, SPRITE_WIDTH};
+use crate::{components::*, constants::*, AppState, CollisionEvent, SoundFX};
 use bevy::math::bounding::IntersectsVolume;
 use bevy::{
     math::bounding::{Aabb2d, BoundingCircle},
@@ -12,10 +12,13 @@ pub struct WeaponPlugin;
 
 impl Plugin for WeaponPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(OnEnter(AppState::InGame), setup_sprite)
+        app.add_systems(OnEnter(AppState::InGame), setup_sprite)
             .add_systems(OnExit(AppState::InGame), cleanup_sprite)
-            .add_systems(FixedUpdate, (move_weapon, collide_enemies.after(move_weapon)).run_if(in_state(AppState::InGame)));
+            .add_systems(
+                FixedUpdate,
+                (move_weapon, collide_enemies.after(move_weapon))
+                    .run_if(in_state(AppState::InGame)),
+            );
     }
 }
 
@@ -117,8 +120,7 @@ pub fn collide_enemies(
 
     let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
     let weapon_radius = weapon_transform.scale.x * (SPRITE_WIDTH as f32 * 2.);
-    let weapon_circle =
-        BoundingCircle::new(weapon_transform.translation.truncate(), weapon_radius);
+    let weapon_circle = BoundingCircle::new(weapon_transform.translation.truncate(), weapon_radius);
     gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::RED);
     for (entity, &transform, mut sprite) in &mut enemies {
         sprite.color = Color::WHITE;
