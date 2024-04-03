@@ -6,6 +6,25 @@ use crate::Scoreboard;
 use bevy::prelude::*;
 use bevy_pkv::PkvStore;
 
+pub struct MenuPlugin;
+
+impl Plugin for MenuPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<MenuEvent>()
+            .add_systems(OnEnter(AppState::MainMenu), setup_main_menu)
+            .add_systems(OnExit(AppState::MainMenu), cleanup_main_menu)
+            .add_systems(OnEnter(AppState::GameOver), setup_game_over)
+            .add_systems(OnExit(AppState::GameOver), cleanup_game_over)
+            .add_systems(
+                Update,
+                (
+                    main_menu_button_system,
+                    game_over_button_system.run_if(in_state(AppState::InGame)),
+                ),
+            );
+    }
+}
+
 #[derive(Event)]
 pub enum MenuEvent {
     Play,

@@ -1,7 +1,7 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
 use crate::components::{Enemy, Pawn};
 use crate::AppState;
-use crate::{constants::*, CollisionEvent, MovementEvent};
+use crate::{constants::*, CollisionEvent};
 use crate::{ScoreEvent, Scoreboard};
 use bevy::prelude::*;
 

@@ -3,6 +3,22 @@ use crate::constants::*;
 use crate::{AppState, Scoreboard};
 use bevy::prelude::*;
 
+pub struct UIPlugin;
+
+impl Plugin for UIPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(AppState::MainMenu), setup_title)
+            .add_systems(OnExit(AppState::MainMenu), cleanup_title)
+            .add_systems(OnExit(AppState::InGame), cleanup_ui)
+            .add_systems(OnEnter(AppState::InGame), (setup_ui, setup_hp))
+            .add_systems(OnExit(AppState::InGame), cleanup_hp)
+            .add_systems(
+                Update,
+                (update_ui, update_hp).run_if(in_state(AppState::InGame)),
+            );
+    }
+}
+
 fn menu_button_system(
     mut state: ResMut<NextState<AppState>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -156,5 +172,42 @@ pub fn cleanup_ui(
 ) {
     for entity in &mut interaction_query.iter() {
         commands.entity(entity.0).despawn_recursive();
+    }
+}
+
+fn setup_title(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let title_font: Handle<Font> = asset_server.load("fonts/DungeonFont.ttf");
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                top: Val::Px(-100.),
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn((
+                TextBundle::from_section(
+                    "Survivors".to_string(),
+                    TextStyle {
+                        font_size: 100.0,
+                        color: Color::WHITE,
+                        font: title_font,
+                    },
+                )
+                .with_text_justify(JustifyText::Center),
+                UI_LAYER,
+                TitleText,
+            ));
+        });
+}
+
+fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
     }
 }
