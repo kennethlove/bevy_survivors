@@ -6,12 +6,7 @@ use bevy::{
 };
 use bevy_pkv::PkvStore;
 
-use bevy_survivors::{
-    animation::AnimationPlugin, audio::AudioPlugin, background::BackgroundPlugin,
-    camera::CameraPlugin, components::*, constants::*, enemy::EnemyPlugin, menu::MenuPlugin,
-    pawn::PawnPlugin, ui::UIPlugin, weapon::WeaponPlugin, AppState, CollisionEvent, ScoreEvent,
-    Scoreboard,
-};
+use bevy_survivors::*;
 
 fn main() {
     App::new()
