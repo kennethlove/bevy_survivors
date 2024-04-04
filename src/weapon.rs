@@ -11,6 +11,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_kira_audio::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
 
@@ -80,20 +81,29 @@ pub fn setup_sprite(
     transform.translation.z = 0.;
     transform.scale = Vec3::splat(2.);
 
-    commands.spawn(WeaponBundle {
-        sprite: SpriteSheetBundle {
-            texture,
-            atlas: TextureAtlas {
-                layout: texture_atlas_layout,
-                index: animation_indices.first,
+    commands.spawn((
+        WeaponBundle {
+            sprite: SpriteSheetBundle {
+                texture,
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
+                },
+                transform,
+                ..default()
             },
-            transform,
+            animation_indices,
+            animation_timer: AnimationTimer(Timer::from_seconds(0.05, TimerMode::Repeating)),
+            weapon,
+        },
+        RigidBody::KinematicPositionBased,
+        KinematicCharacterController {
+            apply_impulse_to_dynamic_bodies: true,
             ..default()
         },
-        animation_indices,
-        animation_timer: AnimationTimer(Timer::from_seconds(0.05, TimerMode::Repeating)),
-        weapon,
-    });
+        Collider::ball(32.),
+        Sensor,
+    ));
     sfx.play(audio).looped();
 }
 
@@ -118,7 +128,6 @@ pub fn collide_enemies(
     mut enemies: Query<(Entity, &Transform, &mut Sprite), With<Enemy>>,
     time: Res<Time>,
     mut events: EventWriter<CollisionEvent>,
-    mut gizmos: Gizmos,
 ) {
     if weapon_query.is_empty() {
         return;
@@ -127,7 +136,6 @@ pub fn collide_enemies(
     let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
     let weapon_radius = weapon_transform.scale.x * (SPRITE_WIDTH as f32 * 2.);
     let weapon_circle = BoundingCircle::new(weapon_transform.translation.truncate(), weapon_radius);
-    gizmos.circle_2d(weapon_circle.center, weapon_circle.radius(), Color::RED);
     for (entity, &transform, mut sprite) in &mut enemies {
         sprite.color = Color::WHITE;
         let enemy_rect = Rect::from_center_size(
