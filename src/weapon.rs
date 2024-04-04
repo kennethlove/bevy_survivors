@@ -102,7 +102,8 @@ pub fn setup_sprite(
             ..default()
         },
         Collider::ball(32.),
-        Sensor,
+        ActiveEvents::COLLISION_EVENTS,
+        // Sensor,
     ));
     sfx.play(audio).looped();
 }

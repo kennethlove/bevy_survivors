@@ -1,9 +1,10 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
 use crate::audio::SoundFX;
-use crate::collision::EnemyHitPlayer;
+use crate::collision::{EnemyHitPlayer, EnemyHitWeapon};
 use crate::components::*;
 use crate::constants::*;
 use crate::pawn::Attack;
+use crate::weapon::Weapon;
 use crate::AppState;
 use crate::MyCollisionEvent;
 use crate::{ScoreEvent, Scoreboard};
@@ -24,7 +25,7 @@ impl Plugin for EnemyPlugin {
             (
                 spawn_enemies,
                 move_enemies,
-                // collided_with_weapon,
+                collided_with_weapon,
                 collided_with_player,
             )
                 .run_if(in_state(AppState::InGame)),
@@ -255,7 +256,7 @@ pub fn move_enemies(
     }
 }
 
-pub fn collided_with_weapon(
+pub fn old_collided_with_weapon(
     mut commands: Commands,
     mut enemies: Query<(Entity, &mut EnemySprite, &mut Sprite), With<Enemy>>,
     mut events: EventReader<MyCollisionEvent>,
@@ -305,6 +306,28 @@ fn collided_with_player(
             Err(_) => continue,
             Ok((_, mut enemy)) => {
                 enemy.health -= 1.;
+                if enemy.health <= 0. {
+                    commands.get_entity(collision_event.0).unwrap().despawn();
+                }
+            }
+        };
+    }
+}
+
+fn collided_with_weapon(
+    mut commands: Commands,
+    mut collision_events: EventReader<EnemyHitWeapon>,
+    mut enemies: Query<(Entity, &mut EnemySprite), With<Enemy>>,
+    attack: Res<Attack>,
+) {
+    if enemies.is_empty() { return; }
+
+    for collision_event in collision_events.read() {
+        match enemies.get_mut(collision_event.0) {
+            Err(_) => continue,
+            Ok((_, mut enemy)) => {
+                enemy.health -= attack.damage_amount * attack.damage_scale;
+                info!("enemy health: {}", enemy.health);
                 if enemy.health <= 0. {
                     commands.get_entity(collision_event.0).unwrap().despawn();
                 }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{components::Pawn, utils::display_events};
+use crate::{components::Pawn, weapon::Weapon};
 
 pub struct CollisionPlugin;
 
@@ -9,7 +9,7 @@ impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<EnemyHitPlayer>()
             .add_event::<EnemyHitWeapon>()
-            .add_systems(Update, enemy_collide_player);
+            .add_systems(Update, (enemy_collide_player, enemy_collide_weapon));
     }
 }
 
@@ -17,7 +17,7 @@ impl Plugin for CollisionPlugin {
 pub struct EnemyHitPlayer(pub Entity);
 
 #[derive(Event)]
-pub struct EnemyHitWeapon;
+pub struct EnemyHitWeapon(pub Entity);
 
 // Enemies collide with player
 fn enemy_collide_player(
@@ -38,5 +38,22 @@ fn enemy_collide_player(
     }
 }
 
-
 // Enemies collide with weapon
+fn enemy_collide_weapon(
+    mut collision_events: EventReader<CollisionEvent>,
+    weapon: Query<Entity, With<Weapon>>,
+    mut enemy_hit_player: EventWriter<EnemyHitWeapon>,
+) {
+    if weapon.is_empty() { return }
+
+    let weapon = weapon.single();
+
+    for event in collision_events.read() {
+        info!("weapon hit enemy");
+        if let CollisionEvent::Started(entity1, entity2, _) = event {
+            if weapon == *entity1 {
+                enemy_hit_player.send(EnemyHitWeapon(*entity2));
+            }
+        }
+    }
+}
