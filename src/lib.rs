@@ -5,12 +5,14 @@ pub mod animation;
 pub mod audio;
 pub mod background;
 pub mod camera;
+pub mod collision;
 pub mod components;
 pub mod constants;
 pub mod enemy;
 pub mod menu;
 pub mod pawn;
 pub mod ui;
+mod utils;
 pub mod weapon;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, States)]
@@ -42,7 +44,7 @@ pub enum ScoreEvent {
 }
 
 #[derive(Event)]
-pub enum CollisionEvent {
+pub enum MyCollisionEvent {
     WeaponHitsEnemy(Entity),
     EnemyHitsPawn(Entity),
 }

@@ -1,7 +1,8 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
+use crate::collision::EnemyHitPlayer;
 use crate::components::{Enemy, Pawn};
 use crate::AppState;
-use crate::{constants::*, CollisionEvent};
+use crate::{constants::*, MyCollisionEvent};
 use crate::{ScoreEvent, Scoreboard};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -166,11 +167,13 @@ fn spawn_pawn(
         },
         RigidBody::KinematicPositionBased,
         KinematicCharacterController {
-            apply_impulse_to_dynamic_bodies: true,
+            // apply_impulse_to_dynamic_bodies: true,
             ..default()
         },
         Collider::cuboid(8., 11.),
         PawnState::default(),
+        ActiveCollisionTypes::default() | ActiveCollisionTypes::KINEMATIC_KINEMATIC,
+        ActiveEvents::COLLISION_EVENTS | ActiveEvents::CONTACT_FORCE_EVENTS,
     ));
 }
 
@@ -241,21 +244,17 @@ pub fn cleanup_pawn(mut commands: Commands, mut query: Query<Entity, With<Pawn>>
 }
 
 pub fn collide_enemies(
-    mut events: EventReader<CollisionEvent>,
+    mut events: EventReader<EnemyHitPlayer>,
     mut player_query: Query<(&mut Pawn, &mut Sprite), Without<Enemy>>,
     mut state: ResMut<NextState<AppState>>,
 ) {
     let (mut player, mut sprite) = player_query.single_mut();
     let mut new_health = player.health.round() as isize;
 
-    for event in events.read() {
-        match event {
-            CollisionEvent::EnemyHitsPawn(_) => {
-                new_health -= 1;
-            }
-            _ => {}
-        }
+    for _ in events.read() {
+        new_health -= 1;
     }
+
     if new_health <= 0 {
         state.set(AppState::GameOver);
     } else {

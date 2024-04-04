@@ -1,10 +1,11 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
 use crate::audio::SoundFX;
+use crate::collision::EnemyHitPlayer;
 use crate::components::*;
 use crate::constants::*;
 use crate::pawn::Attack;
 use crate::AppState;
-use crate::CollisionEvent;
+use crate::MyCollisionEvent;
 use crate::{ScoreEvent, Scoreboard};
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
@@ -23,7 +24,7 @@ impl Plugin for EnemyPlugin {
             (
                 spawn_enemies,
                 move_enemies,
-                collided_with_weapon,
+                // collided_with_weapon,
                 collided_with_player,
             )
                 .run_if(in_state(AppState::InGame)),
@@ -196,8 +197,23 @@ pub fn spawn_enemies(
                 sprite_details: enemy.clone(),
                 ..default()
             },
-            RigidBody::KinematicPositionBased,
+            RigidBody::Dynamic,
+            LockedAxes::ROTATION_LOCKED,
             Collider::cuboid(enemy.width / 2., enemy.height / 2.),
+            Damping {
+                linear_damping: 0.9,
+                angular_damping: 0.9,
+            },
+            Dominance::group(10),
+            Friction {
+                coefficient: 0.9,
+                combine_rule: CoefficientCombineRule::Average,
+            },
+            Restitution {
+                coefficient: 0.1,
+                combine_rule: CoefficientCombineRule::Average,
+            },
+            AdditionalMassProperties::Mass(1.)
         ));
     }
 }
@@ -242,14 +258,14 @@ pub fn move_enemies(
 pub fn collided_with_weapon(
     mut commands: Commands,
     mut enemies: Query<(Entity, &mut EnemySprite, &mut Sprite), With<Enemy>>,
-    mut events: EventReader<CollisionEvent>,
+    mut events: EventReader<MyCollisionEvent>,
     mut score_events: EventWriter<ScoreEvent>,
     asset_server: Res<AssetServer>,
     sfx: Res<AudioChannel<SoundFX>>,
     attack: Res<Attack>,
 ) {
     for event in events.read() {
-        if let CollisionEvent::WeaponHitsEnemy(event_entity) = event {
+        if let MyCollisionEvent::WeaponHitsEnemy(event_entity) = event {
             let entity = commands.get_entity(*event_entity);
             if !entity.is_some() {
                 continue;
@@ -277,24 +293,23 @@ pub fn collided_with_weapon(
     }
 }
 
-pub fn collided_with_player(
+fn collided_with_player(
     mut commands: Commands,
-    enemies: Query<(Entity, &Transform, &EnemySprite), With<Enemy>>,
-    player: Query<&Transform, With<Pawn>>,
-    mut events: EventWriter<CollisionEvent>,
+    mut collision_events: EventReader<EnemyHitPlayer>,
+    mut enemies: Query<(Entity, &mut EnemySprite), With<Enemy>>
 ) {
-    let player_transform = player.single();
-    let player_size =
-        Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * player_transform.scale.truncate();
-    let player_aabb = Aabb2d::new(player_transform.translation.truncate(), player_size / 2.);
-    for (entity, transform, sprite) in &mut enemies.iter() {
-        let enemy_size = Vec2::new(sprite.width, sprite.height) * transform.scale.truncate();
-        let enemy_aabb = Aabb2d::new(transform.translation.truncate(), enemy_size);
-        let collision = player_aabb.intersects(&enemy_aabb);
-        if collision {
-            commands.get_entity(entity).unwrap().despawn();
-            events.send(CollisionEvent::EnemyHitsPawn(entity));
-        }
+    if enemies.is_empty() { return; }
+
+    for collision_event in collision_events.read() {
+        match enemies.get_mut(collision_event.0) {
+            Err(_) => continue,
+            Ok((_, mut enemy)) => {
+                enemy.health -= 1.;
+                if enemy.health <= 0. {
+                    commands.get_entity(collision_event.0).unwrap().despawn();
+                }
+            }
+        };
     }
 }
 

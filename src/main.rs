@@ -7,13 +7,14 @@ use bevy::{
 use bevy_pkv::PkvStore;
 use bevy_rapier2d::prelude::*;
 
-use bevy_survivors::{AppState, CollisionEvent, ScoreEvent, Scoreboard};
+use bevy_survivors::{AppState, MyCollisionEvent, ScoreEvent, Scoreboard};
 use bevy_survivors::constants::*;
 use bevy_survivors::{
     animation::AnimationPlugin,
     audio::AudioPlugin,
     background::BackgroundPlugin,
     camera::CameraPlugin,
+    collision::CollisionPlugin,
     enemy::EnemyPlugin,
     menu::MenuPlugin,
     pawn::PawnPlugin,
@@ -29,7 +30,7 @@ fn main() {
         .insert_resource(PkvStore::new("kennethlove", "Survivors"))
         .init_state::<AppState>()
         .add_event::<ScoreEvent>()
-        .add_event::<CollisionEvent>()
+        .add_event::<MyCollisionEvent>()
         .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
@@ -60,6 +61,7 @@ fn main() {
             AudioPlugin,
             BackgroundPlugin,
             CameraPlugin,
+            CollisionPlugin,
             EnemyPlugin,
             MenuPlugin,
             PawnPlugin,

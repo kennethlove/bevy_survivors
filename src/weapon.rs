@@ -3,7 +3,7 @@ use crate::{
     audio::SoundFX,
     components::*,
     constants::*,
-    AppState, CollisionEvent,
+    AppState, MyCollisionEvent,
 };
 use bevy::math::bounding::IntersectsVolume;
 use bevy::{
@@ -127,7 +127,7 @@ pub fn collide_enemies(
     mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
     mut enemies: Query<(Entity, &Transform, &mut Sprite), With<Enemy>>,
     time: Res<Time>,
-    mut events: EventWriter<CollisionEvent>,
+    mut events: EventWriter<MyCollisionEvent>,
 ) {
     if weapon_query.is_empty() {
         return;
@@ -149,7 +149,7 @@ pub fn collide_enemies(
             && weapon_atlas.index <= weapon.damage_frame_end
             && weapon_atlas.index >= weapon.damage_frame_start
         {
-            events.send(CollisionEvent::WeaponHitsEnemy(entity));
+            events.send(MyCollisionEvent::WeaponHitsEnemy(entity));
         }
     }
 }
