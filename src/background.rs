@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::AppState;
 
@@ -17,15 +18,17 @@ impl Plugin for BackgroundPlugin {
             .add_systems(Startup, setup_background);
     }
 }
-
 fn setup_background(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<AppState>>,
+    mut rapier_config: ResMut<RapierConfiguration>,
     #[cfg(all(not(feature = "atlas"), feature = "render"))] array_texture_loader: Res<
         ArrayTextureLoader,
     >,
 ) {
+    rapier_config.gravity = Vec2::ZERO;
+
     let texture_handle: Handle<Image> = asset_server.load("floors/tiles.png");
     let map_size = TilemapSize { x: 640, y: 320 };
     let tilemap_entity = commands.spawn_empty().id();
@@ -49,16 +52,19 @@ fn setup_background(
     let grid_size = tile_size.into();
     let map_type = TilemapType::Square;
 
-    commands.entity(tilemap_entity).insert(TilemapBundle {
-        grid_size,
-        map_type,
-        size: map_size,
-        storage: tile_storage,
-        texture: TilemapTexture::Single(texture_handle),
-        tile_size,
-        transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
-        ..default()
-    });
+    commands
+        .entity(tilemap_entity)
+        .insert(TilemapBundle {
+            grid_size,
+            map_type,
+            size: map_size,
+            storage: tile_storage,
+            texture: TilemapTexture::Single(texture_handle),
+            tile_size,
+            transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
+            ..default()
+        })
+        .insert(RigidBody::Fixed);
 
     #[cfg(all(not(feature = "atlas"), feature = "render"))]
     {
