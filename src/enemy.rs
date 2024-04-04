@@ -9,6 +9,7 @@ use crate::{ScoreEvent, Scoreboard};
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
 const RUN_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
@@ -179,21 +180,25 @@ pub fn spawn_enemies(
         let mut transform = Transform::from_translation(good_spot);
         transform = transform.with_scale(Vec3::splat(1.));
 
-        commands.spawn(EnemyBundle {
-            sprite: SpriteSheetBundle {
-                texture,
-                transform, // Controls the placement of the sprite
-                atlas: TextureAtlas {
-                    layout: texture_atlas_layouts.add(layout),
-                    index: animation_indices.first,
+        commands.spawn((
+            EnemyBundle {
+                sprite: SpriteSheetBundle {
+                    texture,
+                    transform, // Controls the placement of the sprite
+                    atlas: TextureAtlas {
+                        layout: texture_atlas_layouts.add(layout),
+                        index: animation_indices.first,
+                    },
+                    ..default()
                 },
+                animation_indices,
+                pawn: Enemy,
+                sprite_details: enemy.clone(),
                 ..default()
             },
-            animation_indices,
-            pawn: Enemy,
-            sprite_details: enemy.clone(),
-            ..default()
-        });
+            RigidBody::KinematicPositionBased,
+            Collider::cuboid(enemy.width / 2., enemy.height / 2.),
+        ));
     }
 }
 
