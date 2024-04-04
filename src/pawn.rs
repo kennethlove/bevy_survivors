@@ -47,7 +47,7 @@ impl Plugin for PawnPlugin {
         )
         .add_systems(
             FixedUpdate,
-            (update_pawn_direction, collide_enemies, move_pawn).run_if(in_state(AppState::InGame))
+            (update_pawn_direction, collide_enemies, move_pawn).run_if(in_state(AppState::InGame)),
         );
     }
 }
@@ -169,7 +169,8 @@ fn spawn_pawn(
             apply_impulse_to_dynamic_bodies: true,
             ..default()
         },
-        PawnState::default()
+        Collider::cuboid(8., 11.),
+        PawnState::default(),
     ));
 }
 
@@ -186,7 +187,9 @@ fn move_pawn(
     mut next_state: ResMut<NextState<PawnState>>,
     time: Res<Time>,
 ) {
-    if query.is_empty() { return }
+    if query.is_empty() {
+        return;
+    }
 
     let mut pawn = query.single_mut();
 
@@ -194,12 +197,8 @@ fn move_pawn(
         let MovementEvent { movement } = event;
         if movement.is_some() {
             let direction = movement.unwrap();
-            pawn.translation = {
-                Some(Vec2::new(direction.x, direction.y)
-                    * time.delta_seconds()
-                    * PAWN_SPEED)
-
-            };
+            pawn.translation =
+                Some(Vec2::new(direction.x, direction.y) * time.delta_seconds() * PAWN_SPEED);
             next_state.set(PawnState::Running);
         } else {
             next_state.set(PawnState::Idle);
@@ -211,7 +210,9 @@ fn pawn_movement(
     query: Query<&ActionState<PawnAction>, With<Pawn>>,
     mut event_writer: EventWriter<MovementEvent>,
 ) {
-    if query.is_empty() { return }
+    if query.is_empty() {
+        return;
+    }
 
     let action_state = query.single();
     let mut direction_vector = Vec2::ZERO;
@@ -227,7 +228,9 @@ fn pawn_movement(
     let net_direction = Direction2d::new(direction_vector);
 
     if let Ok(direction) = net_direction {
-        event_writer.send(MovementEvent { movement: Some(direction) });
+        event_writer.send(MovementEvent {
+            movement: Some(direction),
+        });
     }
 }
 
@@ -269,7 +272,9 @@ fn update_direction(
     mut commands: Commands,
     query: Query<(Entity, &KinematicCharacterControllerOutput)>,
 ) {
-    if query.is_empty() { return }
+    if query.is_empty() {
+        return;
+    }
 
     let (entity, controller) = query.single();
 
@@ -280,10 +285,10 @@ fn update_direction(
     }
 }
 
-fn update_pawn_direction(
-    mut query: Query<(&mut Sprite, &Direction), With<Pawn>>,
-) {
-    if query.is_empty() { return }
+fn update_pawn_direction(mut query: Query<(&mut Sprite, &Direction), With<Pawn>>) {
+    if query.is_empty() {
+        return;
+    }
 
     let (mut sprite, direction) = query.single_mut();
     match direction {
