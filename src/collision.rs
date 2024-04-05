@@ -25,7 +25,9 @@ fn enemy_collide_player(
     player: Query<Entity, With<Pawn>>,
     mut enemy_hit_player: EventWriter<EnemyHitPlayer>,
 ) {
-    if player.is_empty() { return }
+    if player.is_empty() {
+        return;
+    }
 
     let player = player.single();
 
@@ -44,12 +46,13 @@ fn enemy_collide_weapon(
     weapon: Query<Entity, With<Weapon>>,
     mut enemy_hit_player: EventWriter<EnemyHitWeapon>,
 ) {
-    if weapon.is_empty() { return }
+    if weapon.is_empty() {
+        return;
+    }
 
     let weapon = weapon.single();
 
     for event in collision_events.read() {
-        info!("weapon hit enemy");
         if let CollisionEvent::Started(entity1, entity2, _) = event {
             if weapon == *entity1 {
                 enemy_hit_player.send(EnemyHitWeapon(*entity2));

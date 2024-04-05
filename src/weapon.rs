@@ -104,6 +104,7 @@ pub fn setup_sprite(
         Collider::ball(32.),
         ActiveEvents::COLLISION_EVENTS,
         // Sensor,
+        SolverGroups::new(ENEMY_WEAPON_GROUP, Group::default()),
     ));
     sfx.play(audio).looped();
 }

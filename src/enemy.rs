@@ -205,7 +205,6 @@ pub fn spawn_enemies(
                 linear_damping: 0.9,
                 angular_damping: 0.9,
             },
-            Dominance::group(10),
             Friction {
                 coefficient: 0.9,
                 combine_rule: CoefficientCombineRule::Average,
@@ -214,7 +213,8 @@ pub fn spawn_enemies(
                 coefficient: 0.1,
                 combine_rule: CoefficientCombineRule::Average,
             },
-            AdditionalMassProperties::Mass(1.)
+            AdditionalMassProperties::Mass(1.),
+            SolverGroups::new(ENEMY_WEAPON_GROUP, Group::default()),
         ));
     }
 }
@@ -297,9 +297,11 @@ pub fn old_collided_with_weapon(
 fn collided_with_player(
     mut commands: Commands,
     mut collision_events: EventReader<EnemyHitPlayer>,
-    mut enemies: Query<(Entity, &mut EnemySprite), With<Enemy>>
+    mut enemies: Query<(Entity, &mut EnemySprite), With<Enemy>>,
 ) {
-    if enemies.is_empty() { return; }
+    if enemies.is_empty() {
+        return;
+    }
 
     for collision_event in collision_events.read() {
         match enemies.get_mut(collision_event.0) {
@@ -317,19 +319,29 @@ fn collided_with_player(
 fn collided_with_weapon(
     mut commands: Commands,
     mut collision_events: EventReader<EnemyHitWeapon>,
+    mut score_events: EventWriter<ScoreEvent>,
     mut enemies: Query<(Entity, &mut EnemySprite), With<Enemy>>,
     attack: Res<Attack>,
+    asset_server: Res<AssetServer>,
+    sfx: Res<AudioChannel<SoundFX>>,
 ) {
-    if enemies.is_empty() { return; }
+    if enemies.is_empty() {
+        return;
+    }
 
     for collision_event in collision_events.read() {
         match enemies.get_mut(collision_event.0) {
             Err(_) => continue,
-            Ok((_, mut enemy)) => {
+            Ok((entity, mut enemy)) => {
                 enemy.health -= attack.damage_amount * attack.damage_scale;
-                info!("enemy health: {}", enemy.health);
+                info!("{:?} health: {}", entity, enemy.health);
                 if enemy.health <= 0. {
                     commands.get_entity(collision_event.0).unwrap().despawn();
+                    score_events.send(ScoreEvent::Scored(enemy.score as u32));
+                    sfx.play(asset_server.load("sfx/enemy_death.ogg"))
+                        .with_volume(0.2);
+                } else {
+                    score_events.send(ScoreEvent::EnemyHit);
                 }
             }
         };
