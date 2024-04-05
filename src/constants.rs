@@ -13,3 +13,4 @@ pub const PAWN_SPEED: f32 = 200.;
 pub const PAWN_SPEED_FAST: f32 = 300.;
 
 pub const ENEMY_WEAPON_GROUP: Group = Group::empty();
+pub const PAWN_WEAPON_GROUP: Group = Group::empty();

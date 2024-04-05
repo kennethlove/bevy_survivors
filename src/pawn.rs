@@ -2,7 +2,7 @@ use crate::animation::{AnimationIndices, AnimationTimer};
 use crate::collision::EnemyHitPlayer;
 use crate::components::{Enemy, Pawn};
 use crate::AppState;
-use crate::{constants::*, MyCollisionEvent};
+use crate::constants::*;
 use crate::{ScoreEvent, Scoreboard};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -174,6 +174,7 @@ fn spawn_pawn(
         PawnState::default(),
         ActiveCollisionTypes::default() | ActiveCollisionTypes::KINEMATIC_KINEMATIC,
         ActiveEvents::COLLISION_EVENTS | ActiveEvents::CONTACT_FORCE_EVENTS,
+        SolverGroups::new(PAWN_WEAPON_GROUP, Group::default()),
     ));
 }
 
