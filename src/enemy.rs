@@ -1,6 +1,6 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
 use crate::audio::SoundFX;
-use crate::collision::{EnemyHitPlayer, EnemyHitWeapon};
+use crate::collision::{Collided, EnemyHitPlayer, EnemyHitWeapon};
 use crate::components::*;
 use crate::constants::*;
 use crate::pawn::Attack;
@@ -81,13 +81,11 @@ fn find_good_spot(
     player: Query<&Transform, With<Pawn>>,
 ) -> Vec3 {
     let player_pos = player.single().translation;
-    let min_x: usize = (player_pos.x + (WIDTH / 2.)).trunc() as usize;
-    let max_x: usize = min_x + (SPRITE_WIDTH * 2) as usize;
+    let distance_x = (player_pos.x + WIDTH).trunc() as usize;
+    let distance_y = (player_pos.y + HEIGHT).trunc() as usize;
 
-    let max_y: usize = (HEIGHT / 2.).trunc() as usize + (SPRITE_HEIGHT * 2) as usize;
-
-    let mut x = fastrand::usize(min_x..max_x) as isize;
-    let mut y = fastrand::usize(..max_y) as isize;
+    let mut x = fastrand::usize(..distance_x) as isize;
+    let mut y = fastrand::usize(..distance_y) as isize;
 
     if fastrand::bool() {
         x = -x;
@@ -97,7 +95,7 @@ fn find_good_spot(
     }
 
     let enemy_transform = Transform::from_translation(Vec3::new(x as f32, y as f32, 0.));
-    if enemy_transform.translation.distance(player_pos) < WIDTH / 4. {
+    if enemy_transform.translation.distance(player_pos) < WIDTH / 2. {
         return find_good_spot(_enemies, player);
     }
     Vec3::new(x as f32, y as f32, 2.)
@@ -112,7 +110,7 @@ fn green_kobold() -> EnemySprite {
         width: 16.,
         height: 20.,
         speed: 0.3,
-        health: 100.,
+        health: 1000.,
         score: 100.,
     }
 }
@@ -126,7 +124,7 @@ fn blue_kobold() -> EnemySprite {
         width: 16.,
         height: 20.,
         speed: 0.3,
-        health: 200.,
+        health: 2000.,
         score: 200.,
     }
 }
@@ -146,7 +144,7 @@ fn troll() -> EnemySprite {
         width: 48.,
         height: 38.,
         speed: 0.1,
-        health: 500.,
+        health: 5000.,
         score: 1000.,
     }
 }
@@ -163,7 +161,7 @@ pub fn spawn_enemies(
 
     let good_spot = find_good_spot(enemies, player);
 
-    if count < ((scoreboard.kills + 1) * 1) as usize {
+    if count < ((scoreboard.kills + 1) * 2) as usize {
         let enemy = match scoreboard.kills {
             0..=50 => green_kobold(),
             51..=75 => blue_kobold(),
@@ -316,37 +314,27 @@ fn collided_with_player(
 
 fn collided_with_weapon(
     mut commands: Commands,
-    mut collision_events: EventReader<EnemyHitWeapon>,
-    mut score_events: EventWriter<ScoreEvent>,
-    mut enemies: Query<(Entity, &mut EnemySprite), With<Enemy>>,
     attack: Res<Attack>,
-    asset_server: Res<AssetServer>,
     sfx: Res<AudioChannel<SoundFX>>,
+    asset_server: Res<AssetServer>,
+    mut score_events: EventWriter<ScoreEvent>,
+    mut collided_enemies: Query<(Entity, &mut EnemySprite), With<Collided>>,
+    mut time: ResMut<Time>,
 ) {
-    if enemies.is_empty() {
-        return;
-    }
-
-    for collision_event in collision_events.read() {
-        match enemies.get_mut(collision_event.0) {
-            Err(_) => continue,
-            Ok((entity, mut enemy)) => {
-                enemy.health -= attack.damage_amount * attack.damage_scale;
-                info!("{:?} health: {}", entity, enemy.health);
-                if enemy.health <= 0. {
-                    commands.get_entity(collision_event.0).unwrap().despawn();
-                    score_events.send(ScoreEvent::Scored(enemy.score as u32));
-                    sfx.play(asset_server.load("sfx/enemy_death.ogg"))
-                        .with_volume(0.2);
-                } else {
-                    score_events.send(ScoreEvent::EnemyHit);
-                }
-            }
-        };
+    for (entity, mut enemy) in &mut collided_enemies {
+        enemy.health -= attack.damage_amount * attack.damage_scale;
+        if enemy.health <= 0. {
+            commands.entity(entity).despawn();
+            score_events.send(ScoreEvent::Scored(enemy.score as u32));
+            sfx.play(asset_server.load("sfx/enemy_death.ogg"))
+                .with_volume(0.2);
+        } else {
+            score_events.send(ScoreEvent::EnemyHit);
+        }
     }
 }
 
-pub fn cleanup_sprites(mut commands: Commands, query: Query<Entity, With<Enemy>>) {
+fn cleanup_sprites(mut commands: Commands, query: Query<Entity, With<Enemy>>) {
     for entity in &query {
         commands.entity(entity).despawn();
     }

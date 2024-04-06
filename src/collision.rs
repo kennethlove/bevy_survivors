@@ -25,7 +25,9 @@ fn enemy_collide_player(
     player: Query<Entity, With<Pawn>>,
     mut enemy_hit_player: EventWriter<EnemyHitPlayer>,
 ) {
-    if player.is_empty() { return }
+    if player.is_empty() {
+        return;
+    }
 
     let player = player.single();
 
@@ -38,21 +40,33 @@ fn enemy_collide_player(
     }
 }
 
+#[derive(Component)]
+pub struct Collided;
+
 // Enemies collide with weapon
 fn enemy_collide_weapon(
+    mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     weapon: Query<Entity, With<Weapon>>,
     mut enemy_hit_player: EventWriter<EnemyHitWeapon>,
 ) {
-    if weapon.is_empty() { return }
+    if weapon.is_empty() {
+        return;
+    }
 
     let weapon = weapon.single();
 
     for event in collision_events.read() {
-        info!("weapon hit enemy");
         if let CollisionEvent::Started(entity1, entity2, _) = event {
             if weapon == *entity1 {
+                commands.entity(*entity2).insert(Collided);
                 enemy_hit_player.send(EnemyHitWeapon(*entity2));
+            }
+        } else if let CollisionEvent::Stopped(entity1, entity2, _) = event {
+            if weapon == *entity1 {
+                if let Some(mut entity_commands) = commands.get_entity(*entity2) {
+                    entity_commands.remove::<Collided>();
+                }
             }
         }
     }

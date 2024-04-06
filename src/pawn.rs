@@ -1,8 +1,8 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
 use crate::collision::EnemyHitPlayer;
 use crate::components::{Enemy, Pawn};
-use crate::AppState;
 use crate::constants::*;
+use crate::AppState;
 use crate::{ScoreEvent, Scoreboard};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
