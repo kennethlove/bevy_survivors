@@ -21,11 +21,8 @@ impl Plugin for WeaponPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::InGame), setup_sprite)
             .add_systems(OnExit(AppState::InGame), cleanup_sprite)
-            .add_systems(
-                FixedUpdate,
-                (move_weapon, collide_enemies.after(move_weapon))
-                    .run_if(in_state(AppState::InGame)),
-            );
+            .add_systems(FixedUpdate, move_weapon.run_if(in_state(AppState::InGame))
+        );
     }
 }
 
@@ -97,13 +94,9 @@ pub fn setup_sprite(
             weapon,
         },
         RigidBody::KinematicPositionBased,
-        KinematicCharacterController {
-            apply_impulse_to_dynamic_bodies: true,
-            ..default()
-        },
         Collider::ball(32.),
         ActiveEvents::COLLISION_EVENTS,
-        // Sensor,
+        Sensor,
         SolverGroups::new(ENEMY_WEAPON_GROUP, Group::default()),
     ));
     sfx.play(audio).looped();
@@ -122,37 +115,6 @@ pub fn move_weapon(
 pub fn cleanup_sprite(mut commands: Commands, mut query: Query<Entity, With<Weapon>>) {
     for entity in &mut query {
         commands.entity(entity).despawn();
-    }
-}
-
-pub fn collide_enemies(
-    mut weapon_query: Query<(&mut AnimationTimer, &TextureAtlas, &Transform, &Weapon)>,
-    mut enemies: Query<(Entity, &Transform, &mut Sprite), With<Enemy>>,
-    time: Res<Time>,
-    mut events: EventWriter<MyCollisionEvent>,
-) {
-    if weapon_query.is_empty() {
-        return;
-    }
-
-    let (mut weapon_timer, weapon_atlas, weapon_transform, weapon) = weapon_query.single_mut();
-    let weapon_radius = weapon_transform.scale.x * (SPRITE_WIDTH as f32 * 2.);
-    let weapon_circle = BoundingCircle::new(weapon_transform.translation.truncate(), weapon_radius);
-    for (entity, &transform, mut sprite) in &mut enemies {
-        sprite.color = Color::WHITE;
-        let enemy_rect = Rect::from_center_size(
-            transform.translation.truncate(),
-            Vec2::new(SPRITE_WIDTH as f32, SPRITE_HEIGHT as f32) * transform.scale.truncate(),
-        );
-        let enemy_aabb = Aabb2d::new(enemy_rect.center(), enemy_rect.half_size());
-        let collision = weapon_circle.intersects(&enemy_aabb);
-        if collision
-            && weapon_timer.0.tick(time.delta()).just_finished()
-            && weapon_atlas.index <= weapon.damage_frame_end
-            && weapon_atlas.index >= weapon.damage_frame_start
-        {
-            events.send(MyCollisionEvent::WeaponHitsEnemy(entity));
-        }
     }
 }
 

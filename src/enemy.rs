@@ -4,11 +4,9 @@ use crate::collision::{EnemyHitPlayer, EnemyHitWeapon};
 use crate::components::*;
 use crate::constants::*;
 use crate::pawn::Attack;
-use crate::weapon::Weapon;
 use crate::AppState;
 use crate::MyCollisionEvent;
 use crate::{ScoreEvent, Scoreboard};
-use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -102,7 +100,7 @@ fn find_good_spot(
     if enemy_transform.translation.distance(player_pos) < WIDTH / 4. {
         return find_good_spot(_enemies, player);
     }
-    Vec3::new(x as f32, y as f32, 0.)
+    Vec3::new(x as f32, y as f32, 2.)
 }
 
 fn green_kobold() -> EnemySprite {
@@ -165,7 +163,7 @@ pub fn spawn_enemies(
 
     let good_spot = find_good_spot(enemies, player);
 
-    if count < ((scoreboard.kills + 1) * 100) as usize {
+    if count < ((scoreboard.kills + 1) * 1) as usize {
         let enemy = match scoreboard.kills {
             0..=50 => green_kobold(),
             51..=75 => blue_kobold(),
