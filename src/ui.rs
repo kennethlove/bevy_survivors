@@ -50,7 +50,7 @@ fn menu_button_system(
     }
 }
 
-pub fn setup_hp(
+fn setup_hp(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut player: Query<(&Transform, &Pawn)>,
@@ -88,7 +88,7 @@ pub fn setup_hp(
     ));
 }
 
-pub fn update_hp(
+fn update_hp(
     mut player: Query<(&Transform, &Pawn), Without<PlayerHealth>>,
     mut hp: Query<(&mut Text, &mut Transform), With<PlayerHealth>>,
 ) {
@@ -106,13 +106,18 @@ pub fn update_hp(
     }
 }
 
-pub fn cleanup_hp(mut commands: Commands, query: Query<Entity, With<PlayerHealth>>) {
+fn cleanup_hp(mut commands: Commands, query: Query<Entity, With<PlayerHealth>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
 }
 
-pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, score: Res<Scoreboard>) {
+fn setup_ui(
+    mut commands: Commands,
+    enemies: Query<Entity, With<Enemy>>,
+    asset_server: Res<AssetServer>,
+    score: Res<Scoreboard>,
+) {
     let font = asset_server.load("fonts/quaver.ttf");
 
     let text_style = TextStyle {
@@ -151,11 +156,23 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, score: R
                 TextBundle::from_section(format!("Kills {}", score.kills), text_style.clone()),
                 Kills,
             ));
+            parent.spawn((
+                TextBundle::from_section(
+                    format!("Enemies {}", enemies.iter().count()),
+                    text_style.clone(),
+                ),
+                Enemies,
+            ));
         });
 }
 
-pub fn update_ui(
-    mut params: ParamSet<(Query<&mut Text, With<Score>>, Query<&mut Text, With<Kills>>)>,
+fn update_ui(
+    mut params: ParamSet<(
+        Query<&mut Text, With<Score>>,
+        Query<&mut Text, With<Kills>>,
+        Query<&mut Text, With<Enemies>>,
+    )>,
+    enemies: Query<Entity, With<Enemy>>,
     scoreboard: Res<Scoreboard>,
 ) {
     for mut text in &mut params.p0() {
@@ -164,9 +181,13 @@ pub fn update_ui(
     for mut text in &mut params.p1() {
         text.sections[0].value = format!("Kills: {}", scoreboard.kills);
     }
+
+    for mut text in &mut params.p2() {
+        text.sections[0].value = format!("Enemies: {}", enemies.iter().count());
+    }
 }
 
-pub fn cleanup_ui(
+fn cleanup_ui(
     mut commands: Commands,
     interaction_query: Query<(Entity, &Interaction, &mut UiImage), With<Button>>,
 ) {
@@ -211,3 +232,15 @@ fn cleanup_title(mut commands: Commands, query: Query<Entity, With<Text>>) {
         commands.entity(entity).despawn_recursive();
     }
 }
+
+#[derive(Component)]
+struct Score;
+
+#[derive(Component)]
+struct Kills;
+
+#[derive(Component)]
+struct Enemies;
+
+#[derive(Component)]
+struct PlayerHealth;
