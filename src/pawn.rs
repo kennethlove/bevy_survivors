@@ -19,7 +19,7 @@ pub struct Attack {
 }
 
 #[derive(Event)]
-pub struct MovementEvent {
+struct MovementEvent {
     movement: Option<Direction2d>,
 }
 
@@ -54,7 +54,7 @@ impl Plugin for PawnPlugin {
 }
 
 #[derive(Bundle)]
-pub struct PawnBundle {
+struct PawnBundle {
     sprite: SpriteSheetBundle,
     animation_indices: AnimationIndices,
     animation_timer: AnimationTimer,
@@ -237,13 +237,13 @@ fn pawn_movement(
     }
 }
 
-pub fn cleanup_pawn(mut commands: Commands, mut query: Query<Entity, With<Pawn>>) {
+fn cleanup_pawn(mut commands: Commands, mut query: Query<Entity, With<Pawn>>) {
     for entity in &mut query {
         commands.entity(entity).despawn();
     }
 }
 
-pub fn collide_enemies(
+fn collide_enemies(
     mut events: EventReader<EnemyHitPlayer>,
     mut player_query: Query<(&mut Pawn, &mut Sprite), Without<Enemy>>,
     mut state: ResMut<NextState<AppState>>,
@@ -296,7 +296,7 @@ fn update_pawn_direction(mut query: Query<(&mut Sprite, &Direction), With<Pawn>>
     }
 }
 
-pub fn update_score(mut score: ResMut<Scoreboard>, mut events: EventReader<ScoreEvent>) {
+fn update_score(mut score: ResMut<Scoreboard>, mut events: EventReader<ScoreEvent>) {
     for event in events.read() {
         match event {
             ScoreEvent::Scored(amount) => {
