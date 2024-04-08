@@ -13,7 +13,7 @@ impl Plugin for AudioPlugin {
             .add_audio_channel::<SoundFX>()
             .add_plugins(bevy_kira_audio::prelude::AudioPlugin)
             .add_systems(Startup, setup_music)
-            .add_systems(Update, audio_system);
+            .add_systems(Update, (volume_control, pause_audio));
     }
 }
 
@@ -26,7 +26,7 @@ pub struct BackgroundMusic;
 #[derive(Resource)]
 pub struct SoundFX;
 
-fn audio_system(
+fn pause_audio(
     state: Res<State<AppState>>,
     mut bg: ResMut<Assets<AudioInstance>>,
     sfx: ResMut<AudioChannel<SoundFX>>,
@@ -62,4 +62,19 @@ fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>, audio: Re
         .fade_in(AudioTween::new(Duration::from_secs(1), AudioEasing::Linear))
         .handle();
     commands.insert_resource(AudioHandle(handle));
+}
+
+fn volume_control(
+    input: Res<ButtonInput<KeyCode>>,
+    background: Res<AudioHandle>) {
+
+    mut bg: ResMut<Assets<AudioInstance>>,
+    sfx: ResMut<AudioChannel<SoundFX>>,
+    handle: Res<AudioHandle>,
+    let vol = background.get_volume();
+    if input.just_pressed(KeyCode::Equal) {
+        background.set_volume(vol += 0.1);
+    } else if input.just_pressed(KeyCode::Minus) {
+        background.set_volume(vol -= 0.1);
+    }
 }

@@ -20,12 +20,3 @@ pub struct OptionsButton;
 
 #[derive(Component)]
 pub struct QuitButton;
-
-#[derive(Component)]
-pub struct Score;
-
-#[derive(Component)]
-pub struct Kills;
-
-#[derive(Component)]
-pub struct PlayerHealth;
