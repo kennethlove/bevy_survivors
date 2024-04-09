@@ -11,6 +11,7 @@ pub mod constants;
 pub mod enemy;
 pub mod menu;
 pub mod pawn;
+pub mod settings;
 pub mod ui;
 mod utils;
 pub mod weapon;

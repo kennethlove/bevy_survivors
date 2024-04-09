@@ -1,3 +1,4 @@
+use crate::settings::Settings;
 use bevy::audio::{PlaybackMode, Volume};
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
@@ -15,12 +16,12 @@ impl Plugin for AudioPlugin {
 #[derive(Component)]
 struct BGMusic;
 
-fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res<Settings>) {
     commands.spawn((
         AudioBundle {
             source: asset_server.load("music/Arcade.ogg"),
             settings: PlaybackSettings {
-                volume: Volume::new(0.5),
+                volume: Volume::new(settings.volume),
                 mode: PlaybackMode::Loop,
                 ..default()
             },
@@ -32,14 +33,19 @@ fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn volume_control(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     bgm: Query<&AudioSink, With<BGMusic>>,
+    mut settings: ResMut<Settings>,
 ) {
     if let Ok(sink) = bgm.get_single() {
+        let mut volume = sink.volume();
+
         if keyboard_input.just_pressed(KeyCode::Equal) {
-            sink.set_volume(sink.volume() + 0.1);
+            volume += 0.1;
         } else if keyboard_input.just_pressed(KeyCode::Minus) {
-            sink.set_volume(sink.volume() - 0.1);
+            volume -= 0.1;
         } else if keyboard_input.just_pressed(KeyCode::Digit0) {
-            sink.set_volume(0.0);
+            volume = 0.;
         }
+        sink.set_volume(volume);
+        settings.volume = volume;
     }
 }

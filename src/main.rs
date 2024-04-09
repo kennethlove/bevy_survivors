@@ -7,20 +7,13 @@ use bevy::{
 use bevy_pkv::PkvStore;
 use bevy_rapier2d::prelude::*;
 
-use bevy_survivors::{AppState, MyCollisionEvent, ScoreEvent, Scoreboard};
 use bevy_survivors::constants::*;
 use bevy_survivors::{
-    animation::AnimationPlugin,
-    audio_system::AudioPlugin,
-    background::BackgroundPlugin,
-    camera::CameraPlugin,
-    collision::CollisionPlugin,
-    enemy::EnemyPlugin,
-    menu::MenuPlugin,
-    pawn::PawnPlugin,
-    ui::UIPlugin,
-    weapon::WeaponPlugin,
+    animation::AnimationPlugin, audio_system::AudioPlugin, background::BackgroundPlugin,
+    camera::CameraPlugin, collision::CollisionPlugin, enemy::EnemyPlugin, menu::MenuPlugin,
+    pawn::PawnPlugin, settings::SettingsPlugin, ui::UIPlugin, weapon::WeaponPlugin,
 };
+use bevy_survivors::{AppState, MyCollisionEvent, ScoreEvent, Scoreboard};
 
 fn main() {
     App::new()
@@ -65,6 +58,7 @@ fn main() {
             EnemyPlugin,
             MenuPlugin,
             PawnPlugin,
+            SettingsPlugin,
             WeaponPlugin,
             UIPlugin,
         ))
