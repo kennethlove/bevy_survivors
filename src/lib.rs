@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 pub mod animation;
-pub mod audio;
+pub mod audio_system;
 pub mod background;
 pub mod camera;
 pub mod collision;

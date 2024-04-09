@@ -11,7 +11,7 @@ use bevy_survivors::{AppState, MyCollisionEvent, ScoreEvent, Scoreboard};
 use bevy_survivors::constants::*;
 use bevy_survivors::{
     animation::AnimationPlugin,
-    audio::AudioPlugin,
+    audio_system::AudioPlugin,
     background::BackgroundPlugin,
     camera::CameraPlugin,
     collision::CollisionPlugin,

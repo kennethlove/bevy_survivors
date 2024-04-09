@@ -1,5 +1,5 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
-use crate::audio::SoundFX;
+use crate::audio_system::SoundFX;
 use crate::collision::{Collided, EnemyHitPlayer, EnemyHitWeapon};
 use crate::components::*;
 use crate::constants::*;
