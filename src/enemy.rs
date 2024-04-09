@@ -1,5 +1,4 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
-use crate::audio_system::SoundFX;
 use crate::collision::{Collided, EnemyHitPlayer, EnemyHitWeapon};
 use crate::components::*;
 use crate::constants::*;
@@ -7,8 +6,9 @@ use crate::pawn::Attack;
 use crate::AppState;
 use crate::MyCollisionEvent;
 use crate::{ScoreEvent, Scoreboard};
+use bevy::audio::{AudioBundle, PlaybackMode, PlaybackSettings, Volume};
 use bevy::prelude::*;
-use bevy_kira_audio::prelude::*;
+// use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
@@ -277,7 +277,6 @@ fn collided_with_player(
 fn collided_with_weapon(
     mut commands: Commands,
     attack: Res<Attack>,
-    sfx: Res<AudioChannel<SoundFX>>,
     asset_server: Res<AssetServer>,
     mut score_events: EventWriter<ScoreEvent>,
     mut collided_enemies: Query<(Entity, &mut EnemySprite), With<Collided>>,
@@ -288,8 +287,15 @@ fn collided_with_weapon(
         if enemy.health <= 0. {
             commands.entity(entity).despawn();
             score_events.send(ScoreEvent::Scored(enemy.score as u32));
-            sfx.play(asset_server.load("sfx/enemy_death.ogg"))
-                .with_volume(0.2);
+            let sfx = asset_server.load("sfx/enemy_death.ogg");
+            commands.spawn(AudioBundle {
+                source: sfx,
+                settings: PlaybackSettings {
+                    volume: Volume::new(0.5),
+                    mode: PlaybackMode::Once,
+                    ..default()
+                },
+            });
         } else {
             score_events.send(ScoreEvent::EnemyHit);
         }

@@ -15,7 +15,7 @@ impl Plugin for AudioPlugin {
 #[derive(Component)]
 struct BGMusic;
 
-fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>, audio: Res<Audio>) {
+fn setup_music(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         AudioBundle {
             source: asset_server.load("music/Arcade.ogg"),
