@@ -1,16 +1,18 @@
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
-    audio::SoundFX,
     components::*,
     constants::*,
     AppState, MyCollisionEvent,
 };
-use bevy::math::bounding::IntersectsVolume;
+use bevy::{
+    audio::{AudioBundle, PlaybackMode, Volume},
+    math::bounding::IntersectsVolume,
+};
 use bevy::{
     math::bounding::{Aabb2d, BoundingCircle},
     prelude::*,
 };
-use bevy_kira_audio::prelude::*;
+// use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 const STARTING_POSITION: Vec3 = Vec3::ZERO;
@@ -21,8 +23,7 @@ impl Plugin for WeaponPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::InGame), setup_sprite)
             .add_systems(OnExit(AppState::InGame), cleanup_sprite)
-            .add_systems(FixedUpdate, move_weapon.run_if(in_state(AppState::InGame))
-        );
+            .add_systems(FixedUpdate, move_weapon.run_if(in_state(AppState::InGame)));
     }
 }
 
@@ -65,7 +66,6 @@ pub fn setup_sprite(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    sfx: Res<AudioChannel<SoundFX>>,
 ) {
     let weapon = weapon_01();
     let texture = asset_server.load(&weapon.filename);
@@ -98,8 +98,15 @@ pub fn setup_sprite(
         ActiveEvents::COLLISION_EVENTS,
         Sensor,
         SolverGroups::new(ENEMY_WEAPON_GROUP, Group::default()),
+        AudioBundle {
+            source: audio,
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Loop,
+                volume: Volume::new(0.5),
+                ..default()
+            },
+        },
     ));
-    sfx.play(audio).looped();
 }
 
 pub fn move_weapon(

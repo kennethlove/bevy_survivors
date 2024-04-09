@@ -1,5 +1,4 @@
 use crate::animation::{AnimationIndices, AnimationTimer};
-use crate::audio::SoundFX;
 use crate::collision::{Collided, EnemyHitPlayer, EnemyHitWeapon};
 use crate::components::*;
 use crate::constants::*;
@@ -7,8 +6,9 @@ use crate::pawn::Attack;
 use crate::AppState;
 use crate::MyCollisionEvent;
 use crate::{ScoreEvent, Scoreboard};
+use bevy::audio::{AudioBundle, PlaybackMode, PlaybackSettings, Volume};
 use bevy::prelude::*;
-use bevy_kira_audio::prelude::*;
+// use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 const IDLE_ANIMATION: AnimationIndices = AnimationIndices { first: 0, last: 1 };
@@ -81,8 +81,8 @@ fn find_good_spot(
     player: Query<&Transform, With<Pawn>>,
 ) -> Vec3 {
     let player_pos = player.single().translation;
-    let distance_x = (player_pos.x + WIDTH).trunc() as usize;
-    let distance_y = (player_pos.y + HEIGHT).trunc() as usize;
+    let distance_x = (player_pos.x + WIDTH / 2.).trunc() as usize;
+    let distance_y = (player_pos.y + HEIGHT / 2.).trunc() as usize;
 
     let mut x = fastrand::usize(..distance_x) as isize;
     let mut y = fastrand::usize(..distance_y) as isize;
@@ -252,44 +252,6 @@ pub fn move_enemies(
     }
 }
 
-pub fn old_collided_with_weapon(
-    mut commands: Commands,
-    mut enemies: Query<(Entity, &mut EnemySprite, &mut Sprite), With<Enemy>>,
-    mut events: EventReader<MyCollisionEvent>,
-    mut score_events: EventWriter<ScoreEvent>,
-    asset_server: Res<AssetServer>,
-    sfx: Res<AudioChannel<SoundFX>>,
-    attack: Res<Attack>,
-) {
-    for event in events.read() {
-        if let MyCollisionEvent::WeaponHitsEnemy(event_entity) = event {
-            let entity = commands.get_entity(*event_entity);
-            if !entity.is_some() {
-                continue;
-            }
-            let event_entity_id = entity.unwrap().id();
-            for (entity, mut enemy, mut sprite) in &mut enemies {
-                let entity_id = commands.get_entity(entity).unwrap().id();
-                if entity_id == event_entity_id {
-                    let health = enemy.health - (attack.damage_amount * attack.damage_scale) as f32;
-                    if health <= 0. {
-                        commands.get_entity(*event_entity).unwrap().despawn();
-                        score_events.send(ScoreEvent::Scored(enemy.score as u32));
-                        sfx.play(asset_server.load("sfx/enemy_death.ogg"))
-                            .with_volume(0.2);
-                    } else {
-                        sprite.color = Color::RED;
-                        enemy.health = health;
-                        score_events.send(ScoreEvent::EnemyHit);
-                    }
-                }
-            }
-        } else {
-            continue;
-        }
-    }
-}
-
 fn collided_with_player(
     mut commands: Commands,
     mut collision_events: EventReader<EnemyHitPlayer>,
@@ -315,7 +277,6 @@ fn collided_with_player(
 fn collided_with_weapon(
     mut commands: Commands,
     attack: Res<Attack>,
-    sfx: Res<AudioChannel<SoundFX>>,
     asset_server: Res<AssetServer>,
     mut score_events: EventWriter<ScoreEvent>,
     mut collided_enemies: Query<(Entity, &mut EnemySprite), With<Collided>>,
@@ -326,8 +287,15 @@ fn collided_with_weapon(
         if enemy.health <= 0. {
             commands.entity(entity).despawn();
             score_events.send(ScoreEvent::Scored(enemy.score as u32));
-            sfx.play(asset_server.load("sfx/enemy_death.ogg"))
-                .with_volume(0.2);
+            let sfx = asset_server.load("sfx/enemy_death.ogg");
+            commands.spawn(AudioBundle {
+                source: sfx,
+                settings: PlaybackSettings {
+                    volume: Volume::new(0.5),
+                    mode: PlaybackMode::Once,
+                    ..default()
+                },
+            });
         } else {
             score_events.send(ScoreEvent::EnemyHit);
         }
@@ -339,3 +307,8 @@ fn cleanup_sprites(mut commands: Commands, query: Query<Entity, With<Enemy>>) {
         commands.entity(entity).despawn();
     }
 }
+
+fn idle() {}
+fn run() {}
+fn play_idle_animation() {}
+fn play_run_animation() {}
