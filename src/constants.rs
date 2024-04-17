@@ -3,8 +3,8 @@ use bevy_rapier2d::geometry::Group;
 
 pub const UI_LAYER: RenderLayers = RenderLayers::layer(9);
 
-pub const WIDTH: f32 = 600.;
-pub const HEIGHT: f32 = 400.;
+pub const WIDTH: f32 = 640.;
+pub const HEIGHT: f32 = 480.;
 
 pub const SPRITE_WIDTH: u32 = 16;
 pub const SPRITE_HEIGHT: u32 = 16;

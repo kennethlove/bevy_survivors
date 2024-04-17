@@ -2,6 +2,7 @@ use crate::{
     animation::{AnimationIndices, AnimationTimer},
     components::*,
     constants::*,
+    settings::Settings,
     AppState, MyCollisionEvent,
 };
 use bevy::{
@@ -23,7 +24,8 @@ impl Plugin for WeaponPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::InGame), setup_sprite)
             .add_systems(OnExit(AppState::InGame), cleanup_sprite)
-            .add_systems(FixedUpdate, move_weapon.run_if(in_state(AppState::InGame)));
+            .add_systems(FixedUpdate, move_weapon.run_if(in_state(AppState::InGame)))
+            .add_systems(Update, update_volume);
     }
 }
 
@@ -66,6 +68,7 @@ pub fn setup_sprite(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    settings: Res<Settings>,
 ) {
     let weapon = weapon_01();
     let texture = asset_server.load(&weapon.filename);
@@ -102,11 +105,25 @@ pub fn setup_sprite(
             source: audio,
             settings: PlaybackSettings {
                 mode: PlaybackMode::Loop,
-                volume: Volume::new(0.5),
+                volume: Volume::new(settings.volume),
                 ..default()
             },
         },
     ));
+}
+
+fn update_volume(
+    mut commands: Commands,
+    mut weapon: Query<Entity, With<Weapon>>,
+    settings: Res<Settings>,
+) {
+    for entity in &mut weapon {
+        commands.entity(entity).insert(PlaybackSettings {
+            volume: Volume::new(settings.volume),
+            mode: PlaybackMode::Loop,
+            ..default()
+        });
+    }
 }
 
 pub fn move_weapon(

@@ -30,7 +30,7 @@ fn setup_background(
     rapier_config.gravity = Vec2::ZERO;
 
     let texture_handle: Handle<Image> = asset_server.load("floors/tiles.png");
-    let map_size = TilemapSize { x: 640, y: 320 };
+    let map_size = TilemapSize { x: 640, y: 480 };
     let tilemap_entity = commands.spawn_empty().id();
     let mut tile_storage = TileStorage::empty(map_size);
 
@@ -41,6 +41,7 @@ fn setup_background(
                 .spawn(TileBundle {
                     position: tile_pos,
                     tilemap_id: TilemapId(tilemap_entity),
+                    texture_index: TileTextureIndex(fastrand::u32(0..=16)),
                     ..default()
                 })
                 .id();
@@ -50,7 +51,7 @@ fn setup_background(
 
     let tile_size = TilemapTileSize { x: 16., y: 16. };
     let grid_size = tile_size.into();
-    let map_type = TilemapType::Square;
+    let map_type = TilemapType::default();
 
     commands
         .entity(tilemap_entity)

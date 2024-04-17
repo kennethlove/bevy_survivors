@@ -45,6 +45,7 @@ fn volume_control(
         } else if keyboard_input.just_pressed(KeyCode::Digit0) {
             volume = 0.;
         }
+        volume = volume.clamp(0., 1.);
         sink.set_volume(volume);
         settings.volume = volume;
     }

@@ -3,6 +3,7 @@ use crate::collision::{Collided, EnemyHitPlayer, EnemyHitWeapon};
 use crate::components::*;
 use crate::constants::*;
 use crate::pawn::Attack;
+use crate::settings::Settings;
 use crate::AppState;
 use crate::MyCollisionEvent;
 use crate::{ScoreEvent, Scoreboard};
@@ -281,6 +282,7 @@ fn collided_with_weapon(
     mut score_events: EventWriter<ScoreEvent>,
     mut collided_enemies: Query<(Entity, &mut EnemySprite), With<Collided>>,
     mut time: ResMut<Time>,
+    settings: Res<Settings>,
 ) {
     for (entity, mut enemy) in &mut collided_enemies {
         enemy.health -= attack.damage_amount * attack.damage_scale;
@@ -291,7 +293,7 @@ fn collided_with_weapon(
             commands.spawn(AudioBundle {
                 source: sfx,
                 settings: PlaybackSettings {
-                    volume: Volume::new(0.5),
+                    volume: Volume::new(settings.volume),
                     mode: PlaybackMode::Once,
                     ..default()
                 },
